@@ -42,20 +42,17 @@ local t = Def.ActorFrame{
     DoStartCommand=function(self)
         SCREENMAN:GetTopScreen():PauseGame(false)
     end,
+
+    
+
     JudgmentMessageCommand = function(self, params)
-        local playerName = SYNCMAN:PlayerName(params.Player)
-        local pss = STATSMAN:GetCurStageStats():GetPlayerStageStats(params.Player)
-        local dance_points = pss:GetPercentDancePoints()
-        local percent = FormatPercentScore( dance_points ):sub(1,-2)
-        
-        SYNCMAN:Send({
-            action = "score",
-            name = playerName,
-            score = percent,
-            health = pss:GetCurrentLife(),
-            failed = pss:GetFailed()
-        })
+        SYNCMAN:SendUpdate()
     end,
+    ExCountsChangedMessageCommand = function(self, params)
+        SYNCMAN:SendUpdate()
+    end,
+
+
 
     SyncStartPlayerScoresChangedMessageCommand=function(self)
         local scores = SYNCMAN:GetCurrentPlayerScores()

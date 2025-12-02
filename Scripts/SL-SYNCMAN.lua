@@ -13,7 +13,8 @@ function SYNCMAN:WS()
     if not SYNCMAN.ws then
         SYNCMAN.ws = NETWORK:WebSocket{
             -- url="ws://192.168.2.33:8765",
-            url="ws://itgonline.electromuis.nl",
+            -- url="ws://itgonline.electromuis.nl",
+            url="ws://localhost:3000",
             handshakeTimeout=3,
             pingInterval=5,
             automaticReconnect=true,
@@ -25,22 +26,24 @@ function SYNCMAN:WS()
                 if msgType == "Message" then
                     local decoded = JsonDecode(msg.data)
                     if decoded then
-                        if decoded.action == "scores" then
-                            SYNCMAN.scores = decoded.scores
+                        if decoded.event == "scores" then
+                            SYNCMAN.scores = decoded.data.scores
                             MESSAGEMAN:Broadcast("SyncStartPlayerScoresChanged")
-                        elseif decoded.action == "players" then
-                            SYNCMAN.players = decoded.players
+                        elseif decoded.event == "players" then
+                            SYNCMAN.players = decoded.data.players
                             MESSAGEMAN:Broadcast("SyncStartPlayersChanged")
-                        elseif decoded.action == "rooms" then
-                            SYNCMAN.rooms = decoded.rooms
+                        elseif decoded.event == "rooms" then
+                            SYNCMAN.rooms = decoded.data.rooms
                             MESSAGEMAN:Broadcast("SyncStartRoomsChanged")
-                        elseif decoded.action == "start" then
+                        elseif decoded.event == "start" then
                             MESSAGEMAN:Broadcast("SyncStartStart")
-                            SYNCMAN.startAt = decoded.start_at or 0
-                        elseif decoded.action == "time" then
+                            SYNCMAN.startAt = decoded.data.start_at or 0
+                        elseif decoded.event == "time" then
                             SYNCMAN:Send({
-                                action = "time",
-                                time = GetTimeSinceStart()
+                                event = "time",
+                                data = {
+                                    time = GetTimeSinceStart()
+                                }
                             })
                         else
                             Trace(JsonEncode(decoded))
@@ -107,8 +110,21 @@ function SYNCMAN:GetCurrentPlayers()
     return SYNCMAN["players"]
 end
 
-function SYNCMAN:SongID(song)
-    return song:GetMainTitle()
+function SYNCMAN:SongInfo(song)
+    if song == nil then
+        song = GAMESTATE:GetCurrentSong()
+    end
+    -- GetSongDir returns /Songs/<Group>/<Song>/
+    -- We convert it to: <Group>/<Song>
+    local songPath = song:GetSongDir()
+    songPath = songPath:sub(8, #songPath-1)
+
+    return {
+        songPath=songPath,
+        title=song:GetDisplayFullTitle(),
+        artist=song:GetDisplayArtist(),
+        songLength=song:MusicLengthSeconds()
+    }   
 end
 
 function SYNCMAN:RoomActive(song)
@@ -121,7 +137,7 @@ function SYNCMAN:RoomActive(song)
     return false
 end
 
-function SYNCMAN:Send(message)
+function SYNCMAN:Send(event, data)
     if not SYNCMAN:IsReady() then
         return false
     end
@@ -131,7 +147,10 @@ function SYNCMAN:Send(message)
     --     return
     -- end
 
-    local encoded = JsonEncode(message)
+    local encoded = JsonEncode({
+        event = event,
+        data = data
+    })
     -- SM("SYNCMAN:Send: " .. encoded)
     -- local result = ws:Send(encoded, false)
     ws:Send(encoded, false)
@@ -143,7 +162,7 @@ function SYNCMAN:Send(message)
     return true
 end
 
-function SYNCMAN:Join(room)
+function SYNCMAN:JoinTemporary(song)
     local players = {}
 
     for player in ivalues( PlayerNumber ) do
@@ -158,11 +177,10 @@ function SYNCMAN:Join(room)
         end
     end
 
-    SYNCMAN:Send({
-        action = "join",
-        room = room,
-        players = players
-    })
+    SYNCMAN:Send(
+        "joinTemporaryLobby",
+        {songInfo = SongInfo(song)}
+    )
 
     -- if res then
         SYNCMAN.inGame = true
@@ -175,9 +193,7 @@ function SYNCMAN:Reset()
     SYNCMAN.inGame = false
     SYNCMAN.playerReady = false
     SYNCMAN.startAt = 0
-    SYNCMAN:Send({
-        action = "leave"
-    })
+    SYNCMAN:Send("leaveLobby")
 end
 
 function SYNCMAN:GetSyncOptionRow()
@@ -196,11 +212,11 @@ function SYNCMAN:GetSyncOptionRow()
             local top_screen = SCREENMAN:GetTopScreen()
 
             if list[1] == true then
-                SYNCMAN.playerReady = not SYNCMAN.playerReady
-                SYNCMAN:Send({
-                    action = "ready",
-                    ready = SYNCMAN.playerReady
-                })
+                -- SYNCMAN.playerReady = not SYNCMAN.playerReady
+                SYNCMAN:Send(
+                    "readyUp",
+                    {playerId=""}
+                )
             end
 
             if list[2] == true then
@@ -222,7 +238,83 @@ function SYNCMAN:PlayerName(player)
     local gsName = SL[pn].GrooveStatsUsername
     if string.len(gsName) > 0 then
         return gsName
-    else
-        return PROFILEMAN:GetPlayerName(player)
     end
+
+    if (PROFILEMAN:IsPersistentProfile(player) and
+				PROFILEMAN:GetProfile(player)) then
+        return PROFILEMAN:GetProfile(player):GetDisplayName()
+    end
+
+    return "NoName"
+end
+
+function SYNCMAN:GetJudgmentCounts()
+	local counts = GetExJudgmentCounts(player)
+	local translation = {
+		["W0"] = "fantasticPlus",
+		["W1"] = "fantastics",
+		["W2"] = "excellents",
+		["W3"] = "greats",
+		["W4"] = "decents",
+		["W5"] = "wayOffs",
+		["Miss"] = "misses",
+		["totalSteps"] = "totalSteps",
+		["Mines"] = "minesHit",
+		["totalMines"] = "totalMines",
+		["Holds"] = "holdsHeld",
+		["totalHolds"] = "totalHolds",
+		["Rolls"] = "rollsHeld",
+		["totalRolls"] = "totalRolls"
+	}
+
+	local judgmentCounts = {}
+
+	for key, value in pairs(counts) do
+		if translation[key] ~= nil then
+			judgmentCounts[translation[key]] = value
+		end
+	end
+
+	return judgmentCounts
+end
+
+function SYNCMAN:SendUpdate()
+    SYNCMAN:Send({
+        action = "updateMachine",
+        state = SYNCMAN:GetMachineState()
+    })
+end
+
+function SYNCMAN:GetMachineState()
+	local players = {}
+	for player in ivalues(GAMESTATE:GetEnabledPlayers()) do
+		local profileName = SYNCMAN:PlayerName(player)		
+        local judgments = SYNCMAN:GetJudgmentCounts(player)
+        local dance_points = STATSMAN:GetCurStageStats():GetPlayerStageStats(player):GetPercentDancePoints()
+        local percent = FormatPercentScore( dance_points ):gsub("%%", "")
+        local score = tonumber(percent)
+        local exScore = CalculateExScore(player)
+
+		local pn = ToEnumShortString(player)
+		players[pn] = {
+			playerId = pn,
+			profileName = profileName,
+			screenName=screenName,
+			ready=readyState[pn],
+
+			judgments = judgments,
+			score = score,
+			exScore = exScore,
+			-- TODO(teejusb): Add song progression.
+		}
+	end
+
+	-- If "P1"/"P2" is missing from players, then the player isn't enabled and the corresponding
+	-- player1/player2 key will be nil.
+	return {
+		machine = {
+			player1=players["P1"],
+			player2=players["P2"]
+		}
+	}
 end
