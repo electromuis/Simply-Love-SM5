@@ -43,8 +43,6 @@ local t = Def.ActorFrame{
         SCREENMAN:GetTopScreen():PauseGame(false)
     end,
 
-    
-
     JudgmentMessageCommand = function(self, params)
         SYNCMAN:SendUpdate()
     end,
@@ -52,9 +50,7 @@ local t = Def.ActorFrame{
         SYNCMAN:SendUpdate()
     end,
 
-
-
-    SyncStartPlayerScoresChangedMessageCommand=function(self)
+    SyncStartLobbyUpdateMessageCommand=function(self)
         local scores = SYNCMAN:GetCurrentPlayerScores()
 
         for i = 1, MAX_PLAYER_COUNT do

@@ -7,9 +7,7 @@ return Def.ActorFrame{
 	end,
 
 	ListRoomsCommand=function(self)
-		SYNCMAN:Send({
-			action = "rooms"
-		})
+		SYNCMAN:Send("searchLobby", {temporary = true})
 	end,
 	
 	Def.Quad{

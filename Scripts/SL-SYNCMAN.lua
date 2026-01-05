@@ -1,12 +1,28 @@
 SYNCMAN = {
-    scores = {},
-    players = {},
+    lobby = {},
     rooms = {},
     ws = nil,
     wsReady = false,
     inGame = false,
-    playerReady = false,
     startAt = 0
+}
+
+SYNCMAN.handlers = {
+    lobbyState = function(data)
+        SYNCMAN.lobby = data
+        MESSAGEMAN:Broadcast("SyncStartLobbyUpdate")
+    end,
+    temporaryLobbiesUpdate = function(data)
+        SYNCMAN.rooms = data.lobbies
+        MESSAGEMAN:Broadcast("SyncStartRoomsChanged")
+    end,
+    start = function(data)
+        MESSAGEMAN:Broadcast("SyncStartStart")
+        SYNCMAN.startAt = data.start_at or 0
+    end,
+    time = function(data)
+        SYNCMAN:Send("time", {time=GetTimeSinceStart()})
+    end
 }
 
 function SYNCMAN:WS()
@@ -18,37 +34,24 @@ function SYNCMAN:WS()
             handshakeTimeout=3,
             pingInterval=5,
             automaticReconnect=true,
-            sendThreaded=false,
+            sendThreaded=true,
             onMessage=function(msg)
                 -- SM(msg)
                 local msgType = ToEnumShortString(msg.type)
 
                 if msgType == "Message" then
                     local decoded = JsonDecode(msg.data)
-                    if decoded then
-                        if decoded.event == "scores" then
-                            SYNCMAN.scores = decoded.data.scores
-                            MESSAGEMAN:Broadcast("SyncStartPlayerScoresChanged")
-                        elseif decoded.event == "players" then
-                            SYNCMAN.players = decoded.data.players
-                            MESSAGEMAN:Broadcast("SyncStartPlayersChanged")
-                        elseif decoded.event == "rooms" then
-                            SYNCMAN.rooms = decoded.data.rooms
-                            MESSAGEMAN:Broadcast("SyncStartRoomsChanged")
-                        elseif decoded.event == "start" then
-                            MESSAGEMAN:Broadcast("SyncStartStart")
-                            SYNCMAN.startAt = decoded.data.start_at or 0
-                        elseif decoded.event == "time" then
-                            SYNCMAN:Send({
-                                event = "time",
-                                data = {
-                                    time = GetTimeSinceStart()
-                                }
-                            })
-                        else
-                            Trace(JsonEncode(decoded))
-                        end
+                    if not decoded then
+                        Trace("ITGO: Could not decode: " .. msg.data)
+                        return
                     end
+
+                    local handler = SYNCMAN.handlers[decoded.event]
+                    if not handler then
+                        Trace("ITGO: No handler for: " .. decoded.event)
+                        return
+                    end
+                    handler(decoded.data)
                 elseif msgType == "Open" then
                     SYNCMAN.wsReady = true
                     MESSAGEMAN:Broadcast("SyncStartConnected")
@@ -57,7 +60,7 @@ function SYNCMAN:WS()
                     MESSAGEMAN:Broadcast("SyncStartDisconnected")
                     Trace("WebSocket closed: " .. msg.reason)
                 else
-                    Trace(JsonEncode(msg))
+                    Trace("ITGO Unknown message type: " .. JsonEncode(msg))
                 end
             end,
         }
@@ -103,11 +106,16 @@ function SYNCMAN:IsReady()
 end
 
 function SYNCMAN:GetCurrentPlayerScores()
-    return SYNCMAN["scores"]
+    -- TODO!!
+    return {}
 end
 
 function SYNCMAN:GetCurrentPlayers()
-    return SYNCMAN["players"]
+    return SYNCMAN.lobby.players
+end
+
+function SYNCMAN:SongInfoMatch(songInfo1, songInfo2)
+    return songInfo1.songPath == songInfo2.songPath
 end
 
 function SYNCMAN:SongInfo(song)
@@ -129,11 +137,13 @@ end
 
 function SYNCMAN:RoomActive(song)
     for s in ivalues(SYNCMAN.rooms) do
-        if s == SYNCMAN:SongID(song) then
-            return true
+        if s.joinable == true then
+            if SYNCMAN:SongInfoMatch(s.songInfo, SYNCMAN:SongInfo(song)) then
+                return true
+            end
         end
     end
-
+    
     return false
 end
 
@@ -179,7 +189,7 @@ function SYNCMAN:JoinTemporary(song)
 
     SYNCMAN:Send(
         "joinTemporaryLobby",
-        {songInfo = SongInfo(song)}
+        {songInfo = SYNCMAN:SongInfo(song)}
     )
 
     -- if res then
@@ -287,6 +297,8 @@ end
 
 function SYNCMAN:GetMachineState()
 	local players = {}
+    local screenName = SCREENMAN:GetTopScreen():GetName()
+
 	for player in ivalues(GAMESTATE:GetEnabledPlayers()) do
 		local profileName = SYNCMAN:PlayerName(player)		
         local judgments = SYNCMAN:GetJudgmentCounts(player)
@@ -296,10 +308,9 @@ function SYNCMAN:GetMachineState()
         local exScore = CalculateExScore(player)
 
 		local pn = ToEnumShortString(player)
-		players[pn] = {
+		players[#players+1] = {
 			playerId = pn,
 			profileName = profileName,
-			screenName=screenName,
 			ready=readyState[pn],
 
 			judgments = judgments,
@@ -309,12 +320,10 @@ function SYNCMAN:GetMachineState()
 		}
 	end
 
-	-- If "P1"/"P2" is missing from players, then the player isn't enabled and the corresponding
-	-- player1/player2 key will be nil.
 	return {
 		machine = {
-			player1=players["P1"],
-			player2=players["P2"]
+            screenName=screenName,
+			players = players
 		}
 	}
 end

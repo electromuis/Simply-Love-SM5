@@ -1,12 +1,7 @@
 local af = Def.ActorFrame {
     InitCommand=function(self)
-        local room = SYNCMAN:SongID(GAMESTATE:GetCurrentSong())
-        SYNCMAN:Join(room)
-    end,
-    OnCommand=function(self)
-        -- SYNCMAN:Send({
-        --     action = "players"
-        -- })
+        SYNCMAN:Join(SYNCMAN:JoinTemporary(GAMESTATE:GetCurrentSong()))
+        -- TODO: Handle result
     end,
     SyncStartStartMessageCommand=function(self)
         local top_screen = SCREENMAN:GetTopScreen()

@@ -9,7 +9,7 @@ local af = Def.ActorFrame{
 		self:queuecommand("Update")
 	end,
 
-	SyncStartPlayerScoresChangedMessageCommand=function(self)
+	SyncStartLobbyUpdateChangedMessageCommand=function(self)
 		self:queuecommand("Update")
 	end,
 

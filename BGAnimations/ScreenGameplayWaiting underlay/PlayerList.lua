@@ -46,9 +46,9 @@ for i = 1, MAX_PLAYER_COUNT do
             self.playerIndex = playerIndex
         end,
         OnCommand=function(self)
-            self:queuecommand("SyncStartPlayersChangedMessageCommand")
+            self:queuecommand("SyncStartLobbyUpdateMessageCommand")
         end,
-        SyncStartPlayersChangedMessageCommand=function(self)
+        SyncStartLobbyUpdateMessageCommand=function(self)
             local players = SYNCMAN:GetCurrentPlayers()
 
             if #players >= self.playerIndex then
@@ -74,9 +74,9 @@ for i = 1, MAX_PLAYER_COUNT do
             self.playerIndex = playerIndex
         end,
         OnCommand=function(self)
-            self:queuecommand("SyncStartPlayersChangedMessageCommand")
+            self:queuecommand("SyncStartLobbyUpdateMessageCommand")
         end,
-        SyncStartPlayersChangedMessageCommand=function(self)
+        SyncStartLobbyUpdateMessageCommand=function(self)
             local players = SYNCMAN:GetCurrentPlayers()
 
             if #players >= self.playerIndex then
@@ -101,9 +101,9 @@ for i = 1, MAX_PLAYER_COUNT do
             self.playerIndex = playerIndex
         end,
         OnCommand=function(self)
-            self:queuecommand("SyncStartPlayersChangedMessageCommand")
+            self:queuecommand("SyncStartLobbyUpdateMessageCommand")
         end,
-        SyncStartPlayersChangedMessageCommand=function(self)
+        SyncStartLobbyUpdateMessageCommand=function(self)
             local players = SYNCMAN:GetCurrentPlayers()
 
             if #players >= self.playerIndex then
@@ -131,9 +131,9 @@ for i = 1, MAX_PLAYER_COUNT do
             self.playerIndex = playerIndex
 		end,
         OnCommand=function(self)
-            self:queuecommand("SyncStartPlayersChangedMessageCommand")
+            self:queuecommand("SyncStartLobbyUpdateMessageCommand")
         end,
-        SyncStartPlayersChangedMessageCommand=function(self)
+        SyncStartLobbyUpdateMessageCommand=function(self)
             local players = SYNCMAN:GetCurrentPlayers()
 
             if #players >= self.playerIndex then
@@ -158,9 +158,9 @@ for i = 1, MAX_PLAYER_COUNT do
             self.playerIndex = playerIndex
 		end,
         OnCommand=function(self)
-            self:queuecommand("SyncStartPlayersChangedMessageCommand")
+            self:queuecommand("SyncStartLobbyUpdateMessageCommand")
         end,
-        SyncStartPlayersChangedMessageCommand=function(self)
+        SyncStartLobbyUpdateMessageCommand=function(self)
             local players = SYNCMAN:GetCurrentPlayers()
 
             if #players >= self.playerIndex then

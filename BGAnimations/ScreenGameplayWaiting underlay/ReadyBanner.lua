@@ -8,9 +8,9 @@ local af = Def.ActorFrame {
         self.showing = false
     end,
     OnCommand=function(self)
-        self:queuecommand("SyncStartPlayersChangedMessageCommand")
+        self:queuecommand("SyncStartLobbyUpdateMessageCommand")
     end,
-    SyncStartPlayersChangedMessageCommand=function(self)
+    SyncStartLobbyUpdateMessageCommand=function(self)
         local players = SYNCMAN:GetCurrentPlayers()
         for i, player in ipairs(players) do
             if not player.ready then
