@@ -5,11 +5,15 @@ local NumHighScores = args.NumHighScores or 5
 local af = Def.ActorFrame{
 	Name="HighScoreList",
 
+	OnCommand=function(self)
+		SYNCMAN:SendUpdate()
+	end,
+
 	InitCommand=function(self)
 		self:queuecommand("Update")
 	end,
 
-	SyncStartLobbyUpdateChangedMessageCommand=function(self)
+	SyncStartLobbyUpdateMessageCommand=function(self)
 		self:queuecommand("Update")
 	end,
 
