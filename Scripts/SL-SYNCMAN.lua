@@ -1,36 +1,60 @@
 SYNCMAN = {
     lobby = {},
     rooms = {},
+    readyState = {
+        P1 = false,
+        P2 = false
+    },
     ws = nil,
     wsReady = false,
     inGame = false,
-    startAt = 0
+    startAt = 0,
+    startPhase = 0
 }
 
 SYNCMAN.handlers = {
     lobbyState = function(data)
         SYNCMAN.lobby = data
         MESSAGEMAN:Broadcast("SyncStartLobbyUpdate")
+        -- SM(data)
     end,
     temporaryLobbiesUpdate = function(data)
         SYNCMAN.rooms = data.lobbies
         MESSAGEMAN:Broadcast("SyncStartRoomsChanged")
     end,
-    start = function(data)
-        MESSAGEMAN:Broadcast("SyncStartStart")
-        SYNCMAN.startAt = data.start_at or 0
+    startSong = function(data)
+        if data.phase == 2 then
+            SYNCMAN.startPhase = 2
+            MESSAGEMAN:Broadcast("SyncStartStart")
+        end
+        if data.phase == 4 then
+            SYNCMAN.startPhase = 4
+            MESSAGEMAN:Broadcast("SyncStartSong")
+        end
+        -- SYNCMAN.startAt = data.start_at or 0
     end,
     time = function(data)
         SYNCMAN:Send("time", {time=GetTimeSinceStart()})
-    end
+    end,
+    responseStatus = function(data)
+        MESSAGEMAN:Broadcast("SyncStartResponse" .. data['event'], data)
+    end,
 }
 
 function SYNCMAN:WS()
     if not SYNCMAN.ws then
+
+        local itgOnlineServer = "online.itgeurocup.com"
+        local httpWhitelist = PREFSMAN:GetPreference("HttpAllowHosts")
+        if not string.find(httpWhitelist, itgOnlineServer) then
+            SM("You must add " .. itgOnlineServer .. " to your Preferences.ini -> HttpAllowHosts")
+        end
+
         SYNCMAN.ws = NETWORK:WebSocket{
             -- url="ws://192.168.2.33:8765",
             -- url="ws://itgonline.electromuis.nl",
-            url="ws://localhost:3000",
+            -- url="ws://localhost:3000",
+            url="ws://" .. itgOnlineServer,
             handshakeTimeout=3,
             pingInterval=5,
             automaticReconnect=true,
@@ -103,11 +127,6 @@ function SYNCMAN:IsReady()
     end
 
     return true
-end
-
-function SYNCMAN:GetCurrentPlayerScores()
-    -- TODO!!
-    return {}
 end
 
 function SYNCMAN:GetCurrentPlayers()
@@ -199,10 +218,14 @@ end
 
 function SYNCMAN:Reset()
     SYNCMAN.scores = {}
-    SYNCMAN.players = {}
+    SYNCMAN.lobby = {}
     SYNCMAN.inGame = false
-    SYNCMAN.playerReady = false
     SYNCMAN.startAt = 0
+    SYNCMAN.readyState = {
+        P1 = false,
+        P2 = false
+    }
+    SYNCMAN.startPhase = 0
     SYNCMAN:Send("leaveLobby")
 end
 
@@ -212,27 +235,27 @@ function SYNCMAN:GetSyncOptionRow()
 		Choices = {"Ready", "Play", "Back"},
 		LayoutType = "ShowAllInRow",
 		SelectType = "SelectOne",
-		OneChoiceForAllPlayers = true,
+		OneChoiceForAllPlayers = false,
 		ExportOnChange = false,
 		LoadSelections = function(self, list, pn)
 			list[1] = true  -- Default to "Play"
             return list
 		end,
-		SaveSelections = function(self, list, pn)
+		SaveSelections = function(self, list, p)
             local top_screen = SCREENMAN:GetTopScreen()
 
             if list[1] == true then
-                -- SYNCMAN.playerReady = not SYNCMAN.playerReady
-                SYNCMAN:Send(
-                    "readyUp",
-                    {playerId=""}
-                )
+                local pn = ToEnumShortString(p)
+                SYNCMAN.readyState[pn] = true
+                
+                SYNCMAN:SendUpdate()
+                MESSAGEMAN:Broadcast("SyncStartLobbyUpdate")
             end
 
             if list[2] == true then
-                SYNCMAN:Send({
-                    action = "start"
-                })
+                SYNCMAN.startPhase = 1
+                SYNCMAN:SendUpdate()
+                SYNCMAN:Send("startSong", {phase = 1})
             end
 
             if list[3] == true then
@@ -258,7 +281,7 @@ function SYNCMAN:PlayerName(player)
     return "NoName"
 end
 
-function SYNCMAN:GetJudgmentCounts()
+function SYNCMAN:GetJudgmentCounts(player)
 	local counts = GetExJudgmentCounts(player)
 	local translation = {
 		["W0"] = "fantasticPlus",
@@ -289,10 +312,10 @@ function SYNCMAN:GetJudgmentCounts()
 end
 
 function SYNCMAN:SendUpdate()
-    SYNCMAN:Send({
-        action = "updateMachine",
-        state = SYNCMAN:GetMachineState()
-    })
+    SYNCMAN:Send(
+        "updateMachine",
+        SYNCMAN:GetMachineState()
+    )
 end
 
 function SYNCMAN:GetMachineState()
@@ -300,22 +323,51 @@ function SYNCMAN:GetMachineState()
     local screenName = SCREENMAN:GetTopScreen():GetName()
 
 	for player in ivalues(GAMESTATE:GetEnabledPlayers()) do
-		local profileName = SYNCMAN:PlayerName(player)		
-        local judgments = SYNCMAN:GetJudgmentCounts(player)
-        local dance_points = STATSMAN:GetCurStageStats():GetPlayerStageStats(player):GetPercentDancePoints()
-        local percent = FormatPercentScore( dance_points ):gsub("%%", "")
-        local score = tonumber(percent)
-        local exScore = CalculateExScore(player)
+		local name = SYNCMAN:PlayerName(player)		
+                
+        local judgments = nil
+		local score = nil
+		local exScore = nil
+        local health = nil
+        local diffLevel = nil
+        local diffType = nil
+        local failed = nil
+
+        if screenName == "ScreenGameplay" or screenName == "ScreenEvaluationStage" or screenName == "ScreenGameplayWaiting" then
+            local steps = GAMESTATE:GetCurrentSteps(player)
+            diffLevel = steps:GetMeter()
+            diffType = steps:GetDifficulty()
+        end
+        
+		if screenName == "ScreenGameplay" or screenName == "ScreenEvaluationStage" then
+			if SYNCMAN.startPhase == 4 then
+                judgments = SYNCMAN:GetJudgmentCounts(player)
+            end
+            local pss = STATSMAN:GetCurStageStats():GetPlayerStageStats(player)
+			local dance_points = pss:GetPercentDancePoints()
+			local percent = FormatPercentScore( dance_points ):gsub("%%", "")
+			score = tonumber(percent)
+			exScore = CalculateExScore(player)
+            failed = pss:GetFailed()
+
+            if screenName == "ScreenGameplay" then
+                health = pss:GetCurrentLife() * 100
+            end
+		end
 
 		local pn = ToEnumShortString(player)
 		players[#players+1] = {
 			playerId = pn,
-			profileName = profileName,
-			ready=readyState[pn],
+			name = name,
+			ready=SYNCMAN.readyState[pn],
+
+            diffLevel = diffLevel,
+            diffType = diffType,
 
 			judgments = judgments,
 			score = score,
 			exScore = exScore,
+            health = health
 			-- TODO(teejusb): Add song progression.
 		}
 	end
@@ -323,6 +375,7 @@ function SYNCMAN:GetMachineState()
 	return {
 		machine = {
             screenName=screenName,
+            startPhase = SYNCMAN.startPhase,
 			players = players
 		}
 	}

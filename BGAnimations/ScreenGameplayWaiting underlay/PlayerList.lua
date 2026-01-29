@@ -78,10 +78,11 @@ for i = 1, MAX_PLAYER_COUNT do
         end,
         SyncStartLobbyUpdateMessageCommand=function(self)
             local players = SYNCMAN:GetCurrentPlayers()
+            -- SM(players)
 
             if #players >= self.playerIndex then
                 local player = players[self.playerIndex]
-                self:settext(player.ping .. " ms")
+                -- self:settext(player.ping .. " ms")
                 self:visible(true)
             else
                 self:visible(false)

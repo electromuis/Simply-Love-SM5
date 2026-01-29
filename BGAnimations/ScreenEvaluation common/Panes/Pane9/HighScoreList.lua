@@ -14,23 +14,16 @@ local af = Def.ActorFrame{
 	end,
 
 	UpdateCommand=function(self)
-		local scores = SYNCMAN:GetCurrentPlayerScores()
+		local scores = SYNCMAN:GetCurrentPlayers()
 		for i=1,NumHighScores do
 			if scores[i] then
 				local score = scores[i]
-				local playerObj = nil
-				for _, player in ipairs(SYNCMAN:GetCurrentPlayers()) do
-					if player.name == score.player then
-						playerObj = player
-						break
-					end
-				end
 
-				self:GetChild("HighScoreEntry"..i):GetChild("Name"):settext(score.player)
-				self:GetChild("HighScoreEntry"..i):GetChild("Score"):settext(score.score .. "%")
+				self:GetChild("HighScoreEntry"..i):GetChild("Name"):settext(score.name)
+				self:GetChild("HighScoreEntry"..i):GetChild("Score"):settext(FormatPercentScore(score.score / 100))
 
 				if playerObj then
-					self:GetChild("HighScoreEntry"..i):GetChild("Diff"):settext(playerObj.diffLevel)
+					self:GetChild("HighScoreEntry"..i):GetChild("Diff"):settext(score.diffLevel)
 				end
 			else
 				self:GetChild("HighScoreEntry"..i):GetChild("Name"):settext("----")

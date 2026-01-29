@@ -12,34 +12,24 @@ local scoreTexts = {}
 local isDouble = GAMESTATE:GetCurrentStyle():GetStyleType() == "StyleType_OnePlayerTwoSides"
 
 local t = Def.ActorFrame{
-    OnCommand=function(self)
+    OnCommand=function(self)        
+        SYNCMAN.startPhase = 3
+        SYNCMAN:SendUpdate()
+        
         SCREENMAN:GetTopScreen():PauseGame(true)
+        SYNCMAN:Send("startSong", {phase = 3})
 
-        for player in ivalues( PlayerNumber ) do
-            if GAMESTATE:IsHumanPlayer(player) then
-                local playerName = SYNCMAN:PlayerName(player)
-
-                SYNCMAN:Send({
-                    action = "score",
-                    name = playerName,
-                    score = "0.00",
-                    health = 1.0,
-                    failed = false
-                })
-            end
-        end
-
-        if SYNCMAN.startAt > 0 then
-            local startDelay = SYNCMAN.startAt - GetTimeSinceStart()
-            -- SM(startDelay)
-            local networkOffset = ThemePrefs.Get("ITGOnlineOffset")
-            startDelay = startDelay + networkOffset
-            self:sleep(startDelay):queuecommand("DoStart")
-        else
-            self:queuecommand("DoStart")
-        end
+        -- if SYNCMAN.startAt > 0 then
+        --     local startDelay = SYNCMAN.startAt - GetTimeSinceStart()
+        --     -- SM(startDelay)
+        --     local networkOffset = ThemePrefs.Get("ITGOnlineOffset")
+        --     startDelay = startDelay + networkOffset
+        --     self:sleep(startDelay):queuecommand("DoStart")
+        -- else
+        --     self:queuecommand("DoStart")
+        -- end
     end,
-    DoStartCommand=function(self)
+    SyncStartSongMessageCommand=function(self)
         SCREENMAN:GetTopScreen():PauseGame(false)
     end,
 
@@ -51,7 +41,7 @@ local t = Def.ActorFrame{
     end,
 
     SyncStartLobbyUpdateMessageCommand=function(self)
-        local scores = SYNCMAN:GetCurrentPlayerScores()
+        local scores = SYNCMAN:GetCurrentPlayers()
 
         for i = 1, MAX_PLAYER_COUNT do
             local scoreIndex = (i - (MAX_PLAYER_COUNT - #scores))
@@ -59,8 +49,8 @@ local t = Def.ActorFrame{
             if scoreIndex > 0 and scoreIndex <= #scores then
                 local score = scores[scoreIndex]
                 local color = score.failed and color("1,0.3,0.3,0.4") or color("1,1,1,0.5")
-                playerNameTexts[i]:settext(score.player):diffuse(color)
-                scoreTexts[i]:settext(score.score):diffuse(color)
+                playerNameTexts[i]:settext(score.name):diffuse(color)
+                scoreTexts[i]:settext(FormatPercentScore(score.score / 100):gsub("%%", "")):diffuse(color)
             else
                 playerNameTexts[i]:settext("")
                 scoreTexts[i]:settextf("")
