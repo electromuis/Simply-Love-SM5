@@ -780,7 +780,7 @@ local Overrides = {
 	ScreenAfterPlayerOptions = {
 		Values = function()
 			local choices = { "Gameplay", "Select Music", "Options2", "Options3", "Online"  }
-			if not SYNCMAN:IsReady() or ThemePrefs.Get("EnableITGOnline") ~= "Yes" then table.remove(choices, 5) end
+			if not SYNCMAN:PlayerOptionsOnline() then table.remove(choices, 5) end
 			if SL.Global.MenuTimer.ScreenSelectMusic < 1 then table.remove(choices, 2) end
 			return choices
 		end,
@@ -803,7 +803,7 @@ local Overrides = {
 	ScreenAfterPlayerOptions2 = {
 		Values = function()
 			local choices = { "Gameplay", "Select Music", "Options1", "Options3", "Online"  }
-			if not SYNCMAN:IsReady() or ThemePrefs.Get("EnableITGOnline") ~= "Yes" then table.remove(choices, 5) end
+			if not SYNCMAN:PlayerOptionsOnline() then table.remove(choices, 5) end
 			if SL.Global.MenuTimer.ScreenSelectMusic < 1 then table.remove(choices, 2) end
 			return choices
 		end,
@@ -827,7 +827,7 @@ local Overrides = {
 	ScreenAfterPlayerOptions3 = {
 		Values = function()
 			local choices = { "Gameplay", "Select Music", "Options1", "Options2", "Online"  }
-			if not SYNCMAN:IsReady() or ThemePrefs.Get("EnableITGOnline") ~= "Yes" then table.remove(choices, 5) end
+			if not SYNCMAN:PlayerOptionsOnline() then table.remove(choices, 5) end
 			if SL.Global.MenuTimer.ScreenSelectMusic < 1 then table.remove(choices, 2) end
 			return choices
 		end,

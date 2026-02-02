@@ -1,6 +1,10 @@
 local af = Def.ActorFrame {
     OnCommand=function(self)
-        SYNCMAN:JoinTemporary(GAMESTATE:GetCurrentSong())
+        if SYNCMAN.lobby == nil then
+            SYNCMAN:JoinTemporary(GAMESTATE:GetCurrentSong())
+        else
+            SYNCMAN:SendUpdate()
+        end
     end,
     SyncStartStartMessageCommand=function(self)
         local top_screen = SCREENMAN:GetTopScreen()

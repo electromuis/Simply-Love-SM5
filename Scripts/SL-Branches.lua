@@ -42,6 +42,10 @@ Branch.ToGameplay = function()
 		return "ScreenGameplayWaiting"
 	end
 
+	if SYNCMAN.lobby ~= nil and SYNCMAN.lobby.temporary == false then
+		return "ScreenGameplayWaiting"
+	end
+
 	return Branch.GameplayScreen()
 end
 
@@ -60,6 +64,7 @@ SelectMusicOrCourse = function()
 		end
 
 		return "ScreenSelectMusic"
+		-- return "ScreenSelectOnlineOption"
 	end
 end
 
@@ -72,6 +77,8 @@ Branch.AllowScreenSelectProfile = function()
 end
 
 Branch.AfterSelectProfile = function()
+	-- return "ScreenSelectOnlineOption"
+
 	-- If we only want to sometimes display QR Login, only do so if at least one
 	-- of the chosen profiles doesn't already have an API key saved.
 	local allApiKeys = true

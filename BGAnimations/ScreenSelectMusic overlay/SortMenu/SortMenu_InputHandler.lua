@@ -146,6 +146,9 @@ local input = function(event)
 				elseif focus.new_overlay == "SetSummary" then
 					SCREENMAN:GetTopScreen():SetNextScreenName("ScreenEvaluationSummarySet")
 					SCREENMAN:GetTopScreen():StartTransitioningScreen("SM_GoToNextScreen")
+				elseif focus.new_overlay == "GoOnline" then
+					SCREENMAN:GetTopScreen():SetNextScreenName("ScreenSelectOnlineOption")
+					SCREENMAN:GetTopScreen():StartTransitioningScreen("SM_GoToNextScreen")
 				end
 			end
 

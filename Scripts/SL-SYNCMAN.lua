@@ -1,5 +1,5 @@
 SYNCMAN = {
-    lobby = {},
+    lobby = nil,
     rooms = {},
     readyState = {
         P1 = false,
@@ -16,11 +16,17 @@ SYNCMAN.handlers = {
     lobbyState = function(data)
         SYNCMAN.lobby = data
         MESSAGEMAN:Broadcast("SyncStartLobbyUpdate")
-        -- SM(data)
     end,
     temporaryLobbiesUpdate = function(data)
         SYNCMAN.rooms = data.lobbies
         MESSAGEMAN:Broadcast("SyncStartRoomsChanged")
+    end,
+    lobbiesUpdate = function(data)
+        SYNCMAN.rooms = data.lobbies
+        MESSAGEMAN:Broadcast("SyncStartRoomsChanged")
+    end,
+    songSelected = function(data)
+        MESSAGEMAN:Broadcast("SongSelected", data)
     end,
     startSong = function(data)
         if data.phase == 2 then
@@ -53,8 +59,8 @@ function SYNCMAN:WS()
         SYNCMAN.ws = NETWORK:WebSocket{
             -- url="ws://192.168.2.33:8765",
             -- url="ws://itgonline.electromuis.nl",
-            -- url="ws://localhost:3000",
-            url="ws://" .. itgOnlineServer,
+            url="ws://localhost:3000",
+            -- url="ws://" .. itgOnlineServer,
             handshakeTimeout=3,
             pingInterval=5,
             automaticReconnect=true,
@@ -91,6 +97,22 @@ function SYNCMAN:WS()
     end
 
     return SYNCMAN.ws
+end
+
+function SYNCMAN:PlayerOptionsOnline()
+    if not SYNCMAN:IsReady() then
+        return false
+    end
+
+    if ThemePrefs.Get("EnableITGOnline") ~= "Yes" then
+        return false
+    end
+
+    if SYNCMAN.lobby ~= nil and SYNCMAN.lobby.temporary == false then
+        return false
+    end
+
+    return true
 end
 
 function SYNCMAN:IsInGame()
@@ -130,6 +152,10 @@ function SYNCMAN:IsReady()
 end
 
 function SYNCMAN:GetCurrentPlayers()
+    if SYNCMAN.lobby == nil then
+        return {}
+    end
+
     return SYNCMAN.lobby.players
 end
 
@@ -218,7 +244,7 @@ end
 
 function SYNCMAN:Reset()
     SYNCMAN.scores = {}
-    SYNCMAN.lobby = {}
+    SYNCMAN.lobby = nil
     SYNCMAN.inGame = false
     SYNCMAN.startAt = 0
     SYNCMAN.readyState = {

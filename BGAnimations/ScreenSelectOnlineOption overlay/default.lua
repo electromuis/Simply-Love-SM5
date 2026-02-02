@@ -1,27 +1,43 @@
 local active_index = 0
 local list_selected = false
-local options = { "Available Lobbies", "Refresh List", "Create Lobby", "Go Back" }
 local t
+
+local options = {
+	{
+		Label = "Available Lobbies",
+		Handler = function()
+			if list_selected == false then
+				list_selected = true
+				SOUND:PlayOnce(THEME:GetPathS("Common", "Start"))
+				t:queuecommand("GainFocus")
+				t:queuecommand("Selected")
+			end
+		end
+	},
+	{
+		Label = "Refresh List",
+		Handler = function()
+			SYNCMAN:Send("searchLobby", {temporary = false})
+		end
+	},
+	{
+		Label = "Create Lobby",
+		Handler = function()
+			MESSAGEMAN:Broadcast("OpenKeyboard")
+		end
+	},
+	{
+		Label = "Go Back",
+		Handler = function()
+			SCREENMAN:GetTopScreen():StartTransitioningScreen("SM_GoToPrevScreen")
+		end
+	}
+}
 
 local holding = {
 	["MenuRight"]=false,
 	["MenuLeft"]=false,
 }
-
-local candidates = {}
-local codes = {
-	"AAAA", "BBBB", "CCCC", "DDDD",
-	"EEEE", "FFFF", "GGGG", "HHHH"
-}
-for i=1,8 do
-	table.insert(candidates, {
-		index=#candidates,
-		code=codes[i],
-		isPasswordProtected=i % 3 == 0,
-		playerCount=i,
-		spectatorCount=i < 4 and 0 or 1,
-	})
-end
 
 local InputHandler = function(event)
   if not event.PlayerNumber or not event.button then return false end
@@ -51,12 +67,22 @@ local InputHandler = function(event)
 				end
 			end
 		elseif event.GameButton == "Start" then
-			if active_index == 0 then
-				list_selected = true
-				SOUND:PlayOnce(THEME:GetPathS("Common", "Start"))
-				t:queuecommand("GainFocus")
-				t:queuecommand("Selected")
+			if options[active_index+1] and options[active_index+1].Handler then
+				options[active_index+1].Handler()
 			end
+
+			-- if list_selected == false then
+			-- 	if active_index == 0 then
+			-- 		list_selected = true
+			-- 		SOUND:PlayOnce(THEME:GetPathS("Common", "Start"))
+			-- 		t:queuecommand("GainFocus")
+			-- 		t:queuecommand("Selected")
+			-- 	end
+			-- else
+			-- 	if options[active_index] and options[active_index].Handler then
+			-- 		options[active_index].Handler()
+			-- 	end
+			-- end
 		elseif event.GameButton == "Select" then
 			if list_selected then
 				list_selected = false
@@ -73,12 +99,24 @@ local InputHandler = function(event)
 end
 
 local af = Def.ActorFrame{
-  OnCommand=function(self)
+	OnCommand=function(self)
 		t=self
-    self:Center()
-    SCREENMAN:GetTopScreen():AddInputCallback(InputHandler)
+		self:Center()
+		SCREENMAN:GetTopScreen():AddInputCallback(InputHandler)
 		self:queuecommand("Hover")
-  end,
+	end,
+	TextEnteredMessageCommand=function(self, params)
+		MESSAGEMAN:Broadcast("CloseKeyboard")
+		SYNCMAN:Send("createLobby", {password = params.text})
+	end,
+	SyncStartResponsecreateLobbyMessageCommand=function(self, data)
+		if data.success == true then
+			SYNCMAN:SendUpdate()
+			SCREENMAN:GetTopScreen():StartTransitioningScreen("SM_GoToNextScreen")
+		else
+			SM("Failed to create lobby")
+		end
+	end
 }
 
 af[#af+1] = LoadFont("Common Normal")..{
@@ -97,7 +135,11 @@ af[#af+1] = Def.ActorFrame{
 		self.idx = 0
 	end,
 	OnCommand=function(self)
-		self:playcommand("UpdateData", {data=candidates})
+		-- self:playcommand("UpdateData", {data=candidates})
+		SYNCMAN:Send("searchLobby", {temporary = false})
+	end,
+	SyncStartRoomsChangedMessageCommand=function()
+		self:playcommand("UpdateData", {data=SYNCMAN.rooms})
 	end,
 
 	Def.Quad{
@@ -137,7 +179,8 @@ af[#af+1] = Def.ActorFrame{
 	},
 
 	LoadFont("Common Normal")..{
-		Text="1/"..#candidates,
+		-- Text="1/"..#candidates,
+		Text="",
 		InitCommand=function(self)
 			self:horizalign(right):x(170):y(-170)
 		end,
@@ -184,7 +227,7 @@ for idx, option in ipairs(options) do
 			},
 
 			LoadFont("Common Bold")..{
-				Text=option,
+				Text=option.Label,
 				InitCommand=function(self)
 					self:zoom(0.5)
 				end,
@@ -196,6 +239,6 @@ for idx, option in ipairs(options) do
 	end
 end
 
-af[#af+1] = LoadActor("Keyboard.lua")
+af[#af+1] = LoadActor("Keyboard/default.lua")
 
 return af
