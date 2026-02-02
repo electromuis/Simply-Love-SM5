@@ -110,6 +110,10 @@ for i = 1, MAX_PLAYER_COUNT do
             if #players >= self.playerIndex then
                 local player = players[self.playerIndex]
                 if player.ready == true then
+                    self:settext("✔")
+                    self:visible(true)
+                else if player.ready == false then
+                    self:settext("❌")
                     self:visible(true)
                 else
                     self:visible(false)

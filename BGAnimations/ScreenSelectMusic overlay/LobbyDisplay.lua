@@ -2,17 +2,14 @@ local NoScrollHandler = function(event)
     if event.GameButton == "MenuRight" or event.GameButton == "MenuLeft" then
         return true
     end
-    
+
     return false
 end
 
 local af = Def.ActorFrame{
     InitCommand=function(self)
         -- self:valign(0)
-
-        if SYNCMAN.lobby and SYNCMAN.lobby.temporary then
-            SYNCMAN:Reset()
-        end
+        SYNCMAN:Reset()
         
         self:visible(false)
         self:xy(30, _screen.cy)
@@ -49,6 +46,12 @@ local af = Def.ActorFrame{
                 -- Block user from changing the song
                 SCREENMAN:GetTopScreen():AddInputCallback(NoScrollHandler)
             else
+                for player in ivalues( PlayerNumber ) do
+                    local pn = ToEnumShortString(player)
+                    SYNCMAN.readyStatus[pn] = false
+                end
+                SYNCMAN:SendUpdate()
+
                 SM("Failed to find song: " .. tostring(data.songInfo.title))
             end
         end

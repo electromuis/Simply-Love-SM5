@@ -13,11 +13,11 @@ local isDouble = GAMESTATE:GetCurrentStyle():GetStyleType() == "StyleType_OnePla
 
 local t = Def.ActorFrame{
     OnCommand=function(self)        
-        SYNCMAN.startPhase = 3
+        SYNCMAN.startPhase = "Loaded"
         SYNCMAN:SendUpdate()
         
         SCREENMAN:GetTopScreen():PauseGame(true)
-        SYNCMAN:Send("startSong", {phase = 3})
+        SYNCMAN:Send("startSong", {phase = SYNCMAN.startPhase})
 
         -- if SYNCMAN.startAt > 0 then
         --     local startDelay = SYNCMAN.startAt - GetTimeSinceStart()

@@ -2,8 +2,8 @@ SYNCMAN = {
     lobby = nil,
     rooms = {},
     readyState = {
-        P1 = false,
-        P2 = false
+        P1 = nil,
+        P2 = nil
     },
     ws = nil,
     wsReady = false,
@@ -243,16 +243,19 @@ function SYNCMAN:JoinTemporary(song)
 end
 
 function SYNCMAN:Reset()
+    if SYNCMAN.lobby ~= nil and SYNCMAN.lobby.temporary == true then
+        SYNCMAN:Send("leaveLobby")
+        SYNCMAN.lobby = nil
+    end
+
     SYNCMAN.scores = {}
-    SYNCMAN.lobby = nil
     SYNCMAN.inGame = false
     SYNCMAN.startAt = 0
     SYNCMAN.readyState = {
-        P1 = false,
-        P2 = false
+        P1 = nil,
+        P2 = nil
     }
     SYNCMAN.startPhase = 0
-    SYNCMAN:Send("leaveLobby")
 end
 
 function SYNCMAN:GetSyncOptionRow()
@@ -279,9 +282,9 @@ function SYNCMAN:GetSyncOptionRow()
             end
 
             if list[2] == true then
-                SYNCMAN.startPhase = 1
+                SYNCMAN.startPhase = "Starting"
                 SYNCMAN:SendUpdate()
-                SYNCMAN:Send("startSong", {phase = 1})
+                SYNCMAN:Send("startSong", {phase = SYNCMAN.startPhase})
             end
 
             if list[3] == true then
