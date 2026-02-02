@@ -11,6 +11,8 @@ local options = {
 				SOUND:PlayOnce(THEME:GetPathS("Common", "Start"))
 				t:queuecommand("GainFocus")
 				t:queuecommand("Selected")
+			else
+				t:queuecommand("SelectLobby")
 			end
 		end
 	},
@@ -23,7 +25,13 @@ local options = {
 	{
 		Label = "Create Lobby",
 		Handler = function()
-			MESSAGEMAN:Broadcast("OpenKeyboard")
+			MESSAGEMAN:Broadcast("OpenKeyboard", {
+				title="Lobby password",
+				handler=function(params)
+					MESSAGEMAN:Broadcast("CloseKeyboard")
+					SYNCMAN:Send("createLobby", {password = params.text})
+				end
+			})
 		end
 	},
 	{
@@ -96,6 +104,8 @@ local InputHandler = function(event)
 			holding[event.GameButton] = false
 		end
 	end
+
+	return true
 end
 
 local af = Def.ActorFrame{
@@ -135,10 +145,11 @@ af[#af+1] = Def.ActorFrame{
 		self.idx = 0
 	end,
 	OnCommand=function(self)
-		-- self:playcommand("UpdateData", {data=candidates})
+		self:playcommand("UpdateData", {data=SYNCMAN.rooms})
 		SYNCMAN:Send("searchLobby", {temporary = false})
 	end,
-	SyncStartRoomsChangedMessageCommand=function()
+	SyncStartRoomsChangedMessageCommand=function(self)
+		SM("Rooms update")
 		self:playcommand("UpdateData", {data=SYNCMAN.rooms})
 	end,
 
@@ -185,7 +196,11 @@ af[#af+1] = Def.ActorFrame{
 			self:horizalign(right):x(170):y(-170)
 		end,
 		UpdateIndexCommand=function(self, params)
-			self:settext(params.idx .. "/" .. params.total)
+			if params.total == 0 then
+				self:settext("0")
+			else
+				self:settext(params.idx .. "/" .. params.total)
+			end
 		end
 	},
 

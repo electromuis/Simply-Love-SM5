@@ -11,6 +11,7 @@ local t = Def.ActorFrame{
     data = params.data
     focus_pos = 1
     self:queuecommand("UpdateSelf")
+	self:GetParent():playcommand("UpdateIndex", {idx=focus_pos+offset, total=#data})
   end,
   NextLobbyCommand=function(self)
     if focus_pos < num_rows and focus_pos < #data then
@@ -39,14 +40,18 @@ local t = Def.ActorFrame{
     end
   end,
   SelectLobbyCommand=function(self, params)
-    if data[focus_pos + offset].isPasswordProtected then
-      if params == nil then
-        self:GetParent():queuecommand("DisplayKeyboard")
-      else
-        -- Try joining lobby with params.password
-      end
-    end
-    -- Try joining lobby
+	-- if data[focus_pos + offset].isPasswordProtected == true then
+	-- 	MESSAGEMAN:Broadcast("OpenKeyboard", {
+	-- 		title="Enter password",
+	-- 		handler=function(params)
+	-- 			MESSAGEMAN:Broadcast("CloseKeyboard")
+	-- 			SYNCMAN:Send("joinLobby", {password = params.text, code=data[focus_pos + offset].code})
+	-- 		end
+	-- 	})
+	-- else
+	SM("Joining")
+		SYNCMAN:Send("joinLobby", {code=data[focus_pos + offset].code})
+	-- end
   end
 }
 

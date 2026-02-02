@@ -21,7 +21,7 @@ SYNCMAN.handlers = {
         SYNCMAN.rooms = data.lobbies
         MESSAGEMAN:Broadcast("SyncStartRoomsChanged")
     end,
-    lobbiesUpdate = function(data)
+    lobbySearched = function(data)
         SYNCMAN.rooms = data.lobbies
         MESSAGEMAN:Broadcast("SyncStartRoomsChanged")
     end,
@@ -59,7 +59,7 @@ function SYNCMAN:WS()
         SYNCMAN.ws = NETWORK:WebSocket{
             -- url="ws://192.168.2.33:8765",
             -- url="ws://itgonline.electromuis.nl",
-            url="ws://localhost:3000",
+            url="ws://localhost:3001",
             -- url="ws://" .. itgOnlineServer,
             handshakeTimeout=3,
             pingInterval=5,
