@@ -1,7 +1,7 @@
 local Players = GAMESTATE:GetHumanPlayers()
 local NumPanes = SL.Global.GameMode=="Casual" and 1 or 8
 
-if SYNCMAN:IsInGame() then
+if SYNCMAN:IsLinked() then
 	NumPanes = 9
 
 	for pn in ivalues(GAMESTATE:GetHumanPlayers()) do

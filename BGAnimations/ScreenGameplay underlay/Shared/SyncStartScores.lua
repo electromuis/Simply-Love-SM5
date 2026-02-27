@@ -12,12 +12,12 @@ local scoreTexts = {}
 local isDouble = GAMESTATE:GetCurrentStyle():GetStyleType() == "StyleType_OnePlayerTwoSides"
 
 local t = Def.ActorFrame{
-    OnCommand=function(self)        
-        SYNCMAN.startPhase = "Loaded"
-        SYNCMAN:SendUpdate()
-        
-        SCREENMAN:GetTopScreen():PauseGame(true)
-        SYNCMAN:Send("startSong", {phase = SYNCMAN.startPhase})
+    OnCommand=function(self)
+		SYNCMAN.inGame = false
+		SCREENMAN:GetTopScreen():PauseGame(true)
+
+        SYNCMAN:Reset() -- Will send update too
+        SYNCMAN:Send("startSong", {phase = "ScreenGameplay"})
 
         -- if SYNCMAN.startAt > 0 then
         --     local startDelay = SYNCMAN.startAt - GetTimeSinceStart()
@@ -30,6 +30,7 @@ local t = Def.ActorFrame{
         -- end
     end,
     SyncStartSongMessageCommand=function(self)
+		SYNCMAN.inGame = true
         SCREENMAN:GetTopScreen():PauseGame(false)
     end,
 

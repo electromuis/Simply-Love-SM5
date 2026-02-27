@@ -7,6 +7,7 @@ AlphabetWheel["isOpen"] = false
 AlphabetWheel["title"] = "Entry"
 AlphabetWheel["handler"] = nil
 AlphabetWheel["actor"] = nil
+AlphabetWheel["inputHandler"] = nil
 ---------------------------------------------------------------------------
 -- Add the reusable metatable for a generic alphabet character
 local alphabet_character_mt = LoadActor("./AlphabetCharacterMT.lua")
@@ -19,8 +20,6 @@ local PossibleCharacters = {
 	"N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
 	"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "?", "!"
 }
-
-local inputHandler = LoadActor("InputHandler.lua", { AlphabetWheel })
 ---------------------------------------------------------------------------
 -- Primary ActorFrame
 local t = Def.ActorFrame {
@@ -28,27 +27,30 @@ local t = Def.ActorFrame {
 	InitCommand=function(self)
 		AlphabetWheel["actor"] = self
 		self:visible(false)
-		self:queuecommand("CaptureInput")
 	end,
 	OpenKeyboardMessageCommand=function(self, params)
 		if AlphabetWheel.isOpen == false then
 			AlphabetWheel["text"] = ""
 			AlphabetWheel["title"] = params.title
+			AlphabetWheel["handler"] = params.handler
+			
 			self:GetChild("Title"):settext( AlphabetWheel.title )
 			AlphabetWheel:set_info_set(PossibleCharacters, 2)
-			
-			local topscreen = SCREENMAN:GetTopScreen()
-			topscreen:AddInputCallback( inputHandler )
-
 			self:visible(true)
 			AlphabetWheel.isOpen = true
-			
+			self:queuecommand("CaptureInput")
 		end
+	end,
+	CaptureInputCommand=function(self)
+		AlphabetWheel["inputHandler"] = LoadActor("InputHandler.lua", { AlphabetWheel })
+		local topscreen = SCREENMAN:GetTopScreen()
+		topscreen:AddInputCallback( AlphabetWheel["inputHandler"] )
 	end,
 	CloseKeyboardMessageCommand=function(self)
 		if AlphabetWheel.isOpen == true then
 			local topscreen = SCREENMAN:GetTopScreen()
-			topscreen:RemoveInputCallback( inputHandler )
+			topscreen:RemoveInputCallback( AlphabetWheel["inputHandler"] )
+			AlphabetWheel["inputHandler"] = nil
 
 			self:visible(false)
 			AlphabetWheel.isOpen = false
@@ -89,6 +91,7 @@ local t = Def.ActorFrame {
 		end,
 		SetCommand=function(self)
 			self:settext( AlphabetWheel.text )
+			SM("Text updated")
 		end
 	}
 }

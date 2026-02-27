@@ -4,6 +4,9 @@ local af = Def.ActorFrame {
             SYNCMAN:JoinTemporary(GAMESTATE:GetCurrentSong())
         else
             SYNCMAN:SendUpdate()
+			if SYNCMAN.lobby.temporary == false then
+				SYNCMAN:SelectSong()
+			end
         end
     end,
     SyncStartStartMessageCommand=function(self)

@@ -25,13 +25,7 @@ local options = {
 	{
 		Label = "Create Lobby",
 		Handler = function()
-			MESSAGEMAN:Broadcast("OpenKeyboard", {
-				title="Lobby password",
-				handler=function(params)
-					MESSAGEMAN:Broadcast("CloseKeyboard")
-					SYNCMAN:Send("createLobby", {password = params.text})
-				end
-			})
+			t:queuecommand("CreateLobby")
 		end
 	},
 	{
@@ -78,20 +72,7 @@ local InputHandler = function(event)
 			if options[active_index+1] and options[active_index+1].Handler then
 				options[active_index+1].Handler()
 			end
-
-			-- if list_selected == false then
-			-- 	if active_index == 0 then
-			-- 		list_selected = true
-			-- 		SOUND:PlayOnce(THEME:GetPathS("Common", "Start"))
-			-- 		t:queuecommand("GainFocus")
-			-- 		t:queuecommand("Selected")
-			-- 	end
-			-- else
-			-- 	if options[active_index] and options[active_index].Handler then
-			-- 		options[active_index].Handler()
-			-- 	end
-			-- end
-		elseif event.GameButton == "Select" then
+		elseif event.GameButton == "Select" or event.GameButton == "Back" then
 			if list_selected then
 				list_selected = false
 				SOUND:PlayOnce(THEME:GetPathS("Common", "Cancel"))
@@ -115,9 +96,28 @@ local af = Def.ActorFrame{
 		SCREENMAN:GetTopScreen():AddInputCallback(InputHandler)
 		self:queuecommand("Hover")
 	end,
-	TextEnteredMessageCommand=function(self, params)
-		MESSAGEMAN:Broadcast("CloseKeyboard")
-		SYNCMAN:Send("createLobby", {password = params.text})
+	CreateLobbyCommand=function(self)
+		MESSAGEMAN:Broadcast("OpenKeyboard", {
+			title="Lobby password",
+			handler=function(params)
+				MESSAGEMAN:Broadcast("CloseKeyboard")
+				SYNCMAN:Send("createLobby", {password = params.text, machine=SYNCMAN:GetMachineState()})
+			end
+		})
+	end,
+	OpenKeyboardMessageCommand=function(self)
+		SCREENMAN:GetTopScreen():RemoveInputCallback(InputHandler)
+	end,
+	CloseKeyboardMessageCommand=function(self)
+		SCREENMAN:GetTopScreen():AddInputCallback(InputHandler)
+	end,
+	SyncStartResponsejoinLobbyMessageCommand=function(self, data)
+		if data.success == true then
+			SYNCMAN:SendUpdate()
+			SCREENMAN:GetTopScreen():StartTransitioningScreen("SM_GoToNextScreen")
+		else
+			SM("Failed to join lobby")
+		end
 	end,
 	SyncStartResponsecreateLobbyMessageCommand=function(self, data)
 		if data.success == true then
@@ -149,7 +149,6 @@ af[#af+1] = Def.ActorFrame{
 		SYNCMAN:Send("searchLobby", {temporary = false})
 	end,
 	SyncStartRoomsChangedMessageCommand=function(self)
-		SM("Rooms update")
 		self:playcommand("UpdateData", {data=SYNCMAN.rooms})
 	end,
 

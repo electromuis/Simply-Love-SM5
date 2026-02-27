@@ -9,7 +9,6 @@ SYNCMAN = {
     wsReady = false,
     inGame = false,
     startAt = 0,
-    startPhase = 0
 }
 
 SYNCMAN.handlers = {
@@ -25,16 +24,14 @@ SYNCMAN.handlers = {
         SYNCMAN.rooms = data.lobbies
         MESSAGEMAN:Broadcast("SyncStartRoomsChanged")
     end,
-    songSelected = function(data)
+    selectSong = function(data)
         MESSAGEMAN:Broadcast("SongSelected", data)
     end,
     startSong = function(data)
-        if data.phase == 2 then
-            SYNCMAN.startPhase = 2
+        if data.phase == "ScreenGameplayWaiting" then -- Load song
             MESSAGEMAN:Broadcast("SyncStartStart")
         end
-        if data.phase == 4 then
-            SYNCMAN.startPhase = 4
+        if data.phase == "ScreenGameplay" then -- Start song
             MESSAGEMAN:Broadcast("SyncStartSong")
         end
         -- SYNCMAN.startAt = data.start_at or 0
@@ -57,10 +54,10 @@ function SYNCMAN:WS()
         end
 
         SYNCMAN.ws = NETWORK:WebSocket{
-            -- url="ws://192.168.2.33:8765",
+            -- url="ws://192.168.2.33:3000",
             -- url="ws://itgonline.electromuis.nl",
-            url="ws://localhost:3001",
-            -- url="ws://" .. itgOnlineServer,
+            -- url="ws://localhost:3000",
+            url="ws://" .. itgOnlineServer,
             handshakeTimeout=3,
             pingInterval=5,
             automaticReconnect=true,
@@ -99,6 +96,23 @@ function SYNCMAN:WS()
     return SYNCMAN.ws
 end
 
+function SYNCMAN:SelectSong()
+	local song = GAMESTATE:GetCurrentSong()
+	-- GetSongDir returns /Songs/<Group>/<Song>/
+	-- We convert it to: <Group>/<Song>
+	local songPath = song:GetSongDir()
+	songPath = songPath:sub(8, #songPath-1)
+
+	SYNCMAN:Send("selectSong", {
+		songInfo = {
+			songPath=songPath,
+			title=song:GetDisplayFullTitle(),
+			artist=song:GetDisplayArtist(),
+			songLength=song:MusicLengthSeconds()
+		}
+	})
+end
+
 function SYNCMAN:PlayerOptionsOnline()
     if not SYNCMAN:IsReady() then
         return false
@@ -115,12 +129,12 @@ function SYNCMAN:PlayerOptionsOnline()
     return true
 end
 
-function SYNCMAN:IsInGame()
+function SYNCMAN:IsLinked()
     if not SYNCMAN:IsReady() then
         return false
     end
 
-    if not SYNCMAN.inGame then
+    if not SYNCMAN.lobby then
         return false
     end
     
@@ -234,12 +248,8 @@ function SYNCMAN:JoinTemporary(song)
 
     SYNCMAN:Send(
         "joinTemporaryLobby",
-        {songInfo = SYNCMAN:SongInfo(song)}
+        {songInfo = SYNCMAN:SongInfo(song), machine=SYNCMAN:GetMachineState()}
     )
-
-    -- if res then
-        SYNCMAN.inGame = true
-    -- end
 end
 
 function SYNCMAN:Reset()
@@ -255,7 +265,8 @@ function SYNCMAN:Reset()
         P1 = nil,
         P2 = nil
     }
-    SYNCMAN.startPhase = 0
+
+	SYNCMAN:SendUpdate()
 end
 
 function SYNCMAN:GetSyncOptionRow()
@@ -282,9 +293,8 @@ function SYNCMAN:GetSyncOptionRow()
             end
 
             if list[2] == true then
-                SYNCMAN.startPhase = "Starting"
                 SYNCMAN:SendUpdate()
-                SYNCMAN:Send("startSong", {phase = SYNCMAN.startPhase})
+                SYNCMAN:Send("startSong", {phase = "ScreenGameplayWaiting"})
             end
 
             if list[3] == true then
@@ -343,11 +353,15 @@ end
 function SYNCMAN:SendUpdate()
     SYNCMAN:Send(
         "updateMachine",
-        SYNCMAN:GetMachineState()
+        {machine = SYNCMAN:GetMachineState()}
     )
 end
 
 function SYNCMAN:GetMachineState()
+	if SCREENMAN == nil or SCREENMAN:GetTopScreen() == nil then
+		return {}
+	end
+
 	local players = {}
     local screenName = SCREENMAN:GetTopScreen():GetName()
 
@@ -369,7 +383,7 @@ function SYNCMAN:GetMachineState()
         end
         
 		if screenName == "ScreenGameplay" or screenName == "ScreenEvaluationStage" then
-			if SYNCMAN.startPhase == 4 then
+			if SYNCMAN.inGame == true then
                 judgments = SYNCMAN:GetJudgmentCounts(player)
             end
             local pss = STATSMAN:GetCurStageStats():GetPlayerStageStats(player)
@@ -402,10 +416,7 @@ function SYNCMAN:GetMachineState()
 	end
 
 	return {
-		machine = {
-            screenName=screenName,
-            startPhase = SYNCMAN.startPhase,
-			players = players
-		}
+		screenName=screenName,
+		players = players
 	}
 end

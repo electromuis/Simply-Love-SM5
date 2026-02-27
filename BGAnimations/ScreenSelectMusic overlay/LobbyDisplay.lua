@@ -17,22 +17,7 @@ local af = Def.ActorFrame{
         self:queuecommand("Update")
 	end,
 
-    SongSelectedMessageCommand=function(self)
-        -- local song = GAMESTATE:GetCurrentSong()
-        -- -- GetSongDir returns /Songs/<Group>/<Song>/
-        -- -- We convert it to: <Group>/<Song>
-        -- local songPath = song:GetSongDir()
-        -- songPath = songPath:sub(8, #songPath-1)
-
-        -- SYNCMAN:Send("selectSong", {
-        --     songInfo = {
-        --         songPath=songPath,
-        --         title=song:GetDisplayFullTitle(),
-        --         artist=song:GetDisplayArtist(),
-        --         songLength=song:MusicLengthSeconds()
-        --     }
-        -- })
-
+    SongSelectedMessageCommand=function(self, data)
         local topScreen = SCREENMAN:GetTopScreen()
         if topScreen and topScreen:GetName() == "ScreenSelectMusic" then
             local song = SONGMAN:FindSong(data.songInfo.songPath)
@@ -95,7 +80,7 @@ local Font = "Common Normal"
 local MAX_PLAYER_COUNT = 8
 
 local yPos = SCREEN_HEIGHT*0.85
-local rowHeight = 18
+local rowHeight = 12
 
 for i = 1, MAX_PLAYER_COUNT do
     local playerIndex = i
@@ -105,7 +90,7 @@ for i = 1, MAX_PLAYER_COUNT do
         Text="",
         InitCommand=function(self)
             -- self:valign(0.5)
-            self:y((1)*rowHeight)
+            self:y((i)*rowHeight)
             -- self:x(-100)
             -- self:halign(0)
             self:zoom(0.5)

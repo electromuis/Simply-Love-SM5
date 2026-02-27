@@ -488,7 +488,9 @@ function InitializeSimplyLove()
 	SL.P1:initialize()
 	SL.P2:initialize()
 	SL.Global:initialize()
-
+	if SYNCMAN then
+		SYNCMAN:Reset()
+	end
 end
 
 InitializeSimplyLove()

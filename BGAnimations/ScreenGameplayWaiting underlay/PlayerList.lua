@@ -109,15 +109,17 @@ for i = 1, MAX_PLAYER_COUNT do
 
             if #players >= self.playerIndex then
                 local player = players[self.playerIndex]
+
                 if player.ready == true then
                     self:settext("✔")
                     self:visible(true)
-                else if player.ready == false then
+                elseif player.ready == false then
                     self:settext("❌")
                     self:visible(true)
                 else
                     self:visible(false)
                 end
+
             else
                 self:visible(false)
             end
@@ -170,8 +172,12 @@ for i = 1, MAX_PLAYER_COUNT do
 
             if #players >= self.playerIndex then
                 local player = players[self.playerIndex]
-                self:visible(true)
-                self:settext(player.diffLevel)
+				if player.diffLevel then
+					self:visible(true)
+					self:settext(player.diffLevel)
+				else
+					self:visible(false)
+				end
             else
                 self:visible(false)
             end
