@@ -40,6 +40,13 @@ local t = Def.ActorFrame{
     ExCountsChangedMessageCommand = function(self, params)
         SYNCMAN:SendUpdate()
     end,
+    PlayerFailedMessageCommand = function(self, params)
+        SYNCMAN:SendUpdate()
+    end,
+    OffCommand=function(self)
+        -- Ensure final state is pushed when leaving gameplay.
+        SYNCMAN:SendUpdate()
+    end,
 
     SyncStartLobbyUpdateMessageCommand=function(self)
         local scores = SYNCMAN:GetCurrentPlayers()

@@ -33,7 +33,7 @@ local af = Def.ActorFrame{
             else
                 for player in ivalues( PlayerNumber ) do
                     local pn = ToEnumShortString(player)
-                    SYNCMAN.readyStatus[pn] = false
+                    SYNCMAN.readyState[pn] = false
                 end
                 SYNCMAN:SendUpdate()
 

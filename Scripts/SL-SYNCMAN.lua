@@ -395,6 +395,9 @@ function SYNCMAN:GetMachineState()
 
             if screenName == "ScreenGameplay" then
                 health = pss:GetCurrentLife() * 100
+                if failed == true then
+                    health = 0
+                end
             end
 		end
 
@@ -410,7 +413,8 @@ function SYNCMAN:GetMachineState()
 			judgments = judgments,
 			score = score,
 			exScore = exScore,
-            health = health
+            health = health,
+			failed = failed
 			-- TODO(teejusb): Add song progression.
 		}
 	end
