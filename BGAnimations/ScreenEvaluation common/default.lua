@@ -1,6 +1,24 @@
 local Players = GAMESTATE:GetHumanPlayers()
 local NumPanes = SL.Global.GameMode=="Casual" and 1 or 8
 
+if SYNCMAN:IsLinked() then
+	NumPanes = 9
+
+	for pn in ivalues(GAMESTATE:GetHumanPlayers()) do
+		local sl_pn = SL[ToEnumShortString(pn)]
+		sl_pn.EvalPanePrimary = 9
+	end
+else
+	for pn in ivalues(GAMESTATE:GetHumanPlayers()) do
+		local sl_pn = SL[ToEnumShortString(pn)]
+		sl_pn.EvalPanePrimary = 1
+		
+		if ThemePrefs.Get("EnableTournamentMode") then
+			sl_pn.EvalPanePrimary = 2
+		end
+	end
+end
+
 local InputHandler = nil
 local EventOverlayInputHandler = nil
 

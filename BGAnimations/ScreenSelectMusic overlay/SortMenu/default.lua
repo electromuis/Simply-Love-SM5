@@ -188,8 +188,7 @@ end
 
 local function PracticeModeAvailable()
 	-- Don't allow practice mode if we're using online lobbies
-	local onlineHandler = GetOnlineHandlerInstance()
-	if onlineHandler and onlineHandler.connected then
+	if SYNCMAN:IsLinked() then
 		return false
 	end
 
@@ -404,7 +403,7 @@ local t = Def.ActorFrame {
 					{ {"TakeABreather", "LoadNewSongs"} },
 					{ {"NeedMoreRam", "ViewDownloads"}, DownloadsExist },
 					{ {"SetSummaryText", "SetSummary"}, SL.Global.Stages.PlayedThisGame > 0 },
-					{ {"BottomText", "OnlineLobbies"}, ThemePrefs.Get("EnableOnlineLobbies") and GAMESTATE:IsEventMode() },
+					{ {"BottomText", "OnlineLobbies"}, SYNCMAN:IsEnabled() and GAMESTATE:IsEventMode() },
 				}
 			},
 			{

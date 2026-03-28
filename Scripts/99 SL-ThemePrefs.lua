@@ -217,6 +217,12 @@ SL_CustomPrefs.Get = function()
 			Choices = map(SecondsToMSS, range(15, 450, 15)),
 			Values  = range(15, 450, 15),
 		},
+		ScreenGameplayWaitingMenuTimer =
+		{
+			Default = 15,
+			Choices = map(SecondsToMSS, range(15, 450, 15)),
+			Values  = range(15, 450, 15),
+		},
 
 		-- - - - - - - - - - - - - - - - - - - -
 		-- Enable/Disable Certain Screens
@@ -296,6 +302,11 @@ SL_CustomPrefs.Get = function()
 			Values  = { true, false }
 		},
 
+		ITGOnlineOffset = {
+			Default = 0,
+			Choices = {}
+		},
+
 		ScoringSystem = {
 			Default = "EX",
 			Choices  = { "EX", "ITG" }
@@ -340,10 +351,9 @@ SL_CustomPrefs.Get = function()
 			Values = { "Always", "Sometimes", "Never" }
 		},
 
-		EnableOnlineLobbies = {
-			Default = false,
-			Choices =  { THEME:GetString("ThemePrefs","Yes"), THEME:GetString("ThemePrefs", "No") },
-			Values  = { true, false }
+		EnableITGOnline = {
+			Default = "No",
+			Choices =  { THEME:GetString("ThemePrefs","Yes"), THEME:GetString("ThemePrefs","Always"), THEME:GetString("ThemePrefs", "No") }
 		},
 	}
 end
@@ -364,8 +374,8 @@ SL_CustomPrefs.Validate = function()
 
 				local values = sl_prefs[k].Values or sl_prefs[k].Choices
 
-				if type( v ) ~= type( sl_prefs[k].Default )
-				or (values and not FindInTable(v, values))
+				if (type( v ) ~= type( sl_prefs[k].Default )
+				or (values and not FindInTable(v, values)) and k ~= "ITGOnlineOffset")
 				then
 					-- overwrite the user's erroneous setting with the default value
 					ThemePrefs.Set(k, sl_prefs[k].Default)

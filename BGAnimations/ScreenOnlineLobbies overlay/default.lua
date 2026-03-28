@@ -112,7 +112,7 @@ local InputHandler = function(event)
 					SOUND:PlayOnce(THEME:GetPathS("Common", "Start"))
 					showing_leave_confirm = false
 					t:GetChild("LeaveConfirmPrompt"):visible(false)
-					MESSAGEMAN:Broadcast("DisconnectOnline")
+					SYNCMAN:Disconnect()
 					connected = false
 					mode = "browse"
 					leaving_lobby = false
@@ -159,9 +159,10 @@ local InputHandler = function(event)
 							showSpinner=true,
 							showPrompt=false
 						})
-						MESSAGEMAN:Broadcast("JoinLobby", {
+						SYNCMAN:Send("JoinLobby", {
 							code=join_lobby_code,
-							password=join_lobby_password
+							password=join_lobby_password,
+							machine=SYNCMAN:GetMachineState()
 						})
 						-- Clear out passwords after attempting to join a lobby for security
 						join_lobby_password = ""
@@ -171,7 +172,10 @@ local InputHandler = function(event)
 							showSpinner=true,
 							showPrompt=false
 						})
-						MESSAGEMAN:Broadcast("CreateLobby", {password=create_lobby_password})
+						SYNCMAN:Send("createLobby", {
+							password=create_lobby_password,
+							machine=SYNCMAN:GetMachineState()
+						})
 					end
 					SOUND:PlayOnce(THEME:GetPathS("Common", "Start"))
 				elseif selected_char == "❌" then
@@ -294,26 +298,14 @@ local InputHandler = function(event)
 				end
 			elseif active_index == 1 then
 				SOUND:PlayOnce(THEME:GetPathS("Common", "Start"))
-
-				-- Uncomment the below to inject a sample lobby for testing purposes when refreshing the lobby list. --- IGNORE ---
-				-- t:playcommand("SetStatus", {
-				-- 	text="Loaded sample lobby (test mode).",
-				-- 	showSpinner=false,
-				-- 	showPrompt=false
-				-- })
-				-- MESSAGEMAN:Broadcast("LobbySearched", {
-				-- 	lobbies = {sample_lobby}
-				-- })
-				-- return false
-
-				local onlineHandler = GetOnlineHandlerInstance()
-				if onlineHandler and onlineHandler.connected then
+				
+				if SYNCMAN.connected then
 					t:playcommand("SetStatus", {
 						text="Searching lobbies...",
 						showSpinner=true,
 						showPrompt=false
 					})
-					MESSAGEMAN:Broadcast("SearchLobby")
+					SYNCMAN:Send("searchLobby", {temporary = false})
 				else
 					connected = false
 					has_error = false
@@ -363,9 +355,9 @@ end
 local wait_time = 0
 local attempted = false
 local af = Def.ActorFrame{
-  OnCommand=function(self)
+	OnCommand=function(self)
 		t=self
-    self:Center()
+		self:Center()
 		if not input_added and SCREENMAN:GetTopScreen() then
 			SCREENMAN:GetTopScreen():AddInputCallback(InputHandler)
 			input_added = true
@@ -377,11 +369,10 @@ local af = Def.ActorFrame{
 			showSpinner=true
 		})
 		self:queuecommand("CheckConnect")
-  end,
+	end,
 	OffCommand=function(self)
-		local onlineHandler = GetOnlineHandlerInstance()
-		if onlineHandler and onlineHandler.connected and not onlineHandler.inLobby then
-			MESSAGEMAN:Broadcast("DisconnectOnline")
+		if SYNCMAN.connected and not SYNCMAN.lobby then
+			SYNCMAN:Disconnect()
 		end
 	end,
 	HoverCommand=function(self)
@@ -492,20 +483,19 @@ local af = Def.ActorFrame{
 		self:GetChild("NetworkStatus"):playcommand("Set", params)
 	end,
 	CheckConnectCommand=function(self)
-		local onlineHandler = GetOnlineHandlerInstance()
-		if onlineHandler then
+		if SYNCMAN:IsEnabled() then
 			-- If no connection exists, first (re)establish the connection.
 			-- Only try once per screen load to avoid infinite loops of trying to connect.
-			if not attempted and (not onlineHandler.socket or onlineHandler.errorMsg ~= nil) then
+			if not attempted and (not SYNCMAN.ws or SYNCMAN.errorMsg ~= nil) then
 				self:playcommand("SetStatus", {
 					text="Connecting to online service...",
 					showSpinner=true
 				})
-				MESSAGEMAN:Broadcast("ConnectOnline")
+				SYNCMAN:Connect()
 				attempted = true
 			end
 
-			if not onlineHandler.connected and onlineHandler.errorMsg == nil then
+			if not SYNCMAN.connected and SYNCMAN.errorMsg == nil then
 				wait_time = wait_time + 1
 				self:playcommand("SetStatus", {
 					text="Connecting to online service... ("..wait_time.."s)",
@@ -524,9 +514,8 @@ local af = Def.ActorFrame{
 		end
 	end,
 	DisplayCommand=function(self)
-		local onlineHandler = GetOnlineHandlerInstance()
-		if onlineHandler then
-			if onlineHandler.connected then
+		if SYNCMAN:IsEnabled() then
+			if SYNCMAN.connected then
 				connected = true
 				has_error = false
 				self:playcommand("SetStatus", {
@@ -541,15 +530,15 @@ local af = Def.ActorFrame{
 				if emptyText then
 					emptyText:visible(#candidates == 0)
 				end
-				MESSAGEMAN:Broadcast("SearchLobby")
+				SYNCMAN:Send("searchLobby", {temporary = false})
 				self:queuecommand("Hover")
 			end
 
-			if onlineHandler.errorMsg ~= nil then
+			if SYNCMAN.errorMsg ~= nil then
 				connected = false
 				has_error = true
 				self:playcommand("SetStatus", {
-					text="Error connecting to online service:\n"..onlineHandler.errorMsg,
+					text="Error connecting to online service:\n"..SYNCMAN.errorMsg,
 					showSpinner=false,
 					showPrompt=true,
 					promptText="Press &START; to return to Select Music."
@@ -558,7 +547,7 @@ local af = Def.ActorFrame{
 			end
 		end
 	end,
-	LobbySearchedMessageCommand=function(self, params)
+	SyncStartRoomsChangedMessageCommand=function(self, params)
 		candidates = params and params.lobbies or {}
 
 		local lobbyContent = self:GetChild("LobbyContent")
@@ -630,7 +619,7 @@ local af = Def.ActorFrame{
 				showSpinner=true,
 				showPrompt=false
 			})
-			MESSAGEMAN:Broadcast("JoinLobby", {
+			SYNCMAN:Send("joinLobby", {
 				code=params.code,
 				password=params.password or ""
 			})
@@ -654,7 +643,7 @@ local af = Def.ActorFrame{
 			self:queuecommand("Hover")
 		end
 	end,
-	OnlineResponseStatusMessageCommand=function(self, params)
+	SyncStartResponseCreateLobby=function(self, params)
 		if params and params.event == "createLobby" and params.success == false then
 			mode = "browse"
 			self:GetChild("JoinedLobbyContent"):visible(false)
@@ -664,7 +653,10 @@ local af = Def.ActorFrame{
 				showSpinner=false,
 				showPrompt=false
 			})
-		elseif params and params.event == "joinLobby" and params.success == false then
+		end
+	end,
+	SyncStartResponseJoinLobby=function(self, params)
+		if params.success == false then
 			mode = "browse"
 			self:GetChild("JoinedLobbyContent"):visible(false)
 			self:GetChild("LobbyContent"):visible(true)
@@ -673,7 +665,10 @@ local af = Def.ActorFrame{
 				showSpinner=false,
 				showPrompt=false
 			})
-		elseif params and params.event == "leaveLobby" and params.success == false then
+		end
+	end,
+	SyncStartResponseLeaveLobby=function(self, params)
+		if params.success == false then
 			leaving_lobby = false
 			showing_leave_confirm = false
 			self:playcommand("SetStatus", {

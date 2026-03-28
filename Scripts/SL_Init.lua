@@ -147,6 +147,7 @@ local GlobalDefaults = {
 				ScreenEvaluationNonstop = ThemePrefs.Get("ScreenEvaluationNonstopMenuTimer"),
 				ScreenEvaluationSummary = ThemePrefs.Get("ScreenEvaluationSummaryMenuTimer"),
 				ScreenNameEntry         = ThemePrefs.Get("ScreenNameEntryMenuTimer"),
+				ScreenGameplayWaiting   = ThemePrefs.Get("ScreenGameplayWaitingMenuTimer"),
 			}
 			self.TimeAtSessionStart = nil
 			self.SampleMusicLoops = ThemePrefs.Get("SampleMusicLoops")
@@ -507,7 +508,6 @@ function InitializeSimplyLove()
 	SL.P1:initialize()
 	SL.P2:initialize()
 	SL.Global:initialize()
-
 end
 
 InitializeSimplyLove()

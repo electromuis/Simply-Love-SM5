@@ -19,6 +19,30 @@ af[#af+1] = Def.Sprite{
 	end
 }
 
+af[#af+1] = LoadFont("Common Normal")..{
+	Text="🌍",
+	InitCommand=function(self)
+		self:visible(false)
+		self:horizalign(left)
+		self:x(SCREEN_CENTER_X-90)
+		self.mySong	= nil
+	end,
+	UpdateShowCommand=function(self)
+		if self.mySong and SYNCMAN:RoomActive(self.mySong) then
+			self:visible(true)
+		else
+			self:visible(false)
+		end
+	end,
+	SetCommand=function(self, params)
+		self.mySong = params.Song
+		self:queuecommand("UpdateShow")
+	end,
+	SyncStartRoomsChangedMessageCommand=function(self, params)
+		self:queuecommand("UpdateShow")
+	end
+}
+
 for player in ivalues(PlayerNumber) do
 	af[#af+1] = LoadActor("Favorites.lua", player)
 	af[#af+1] = LoadActor("Unlocks.lua", player)

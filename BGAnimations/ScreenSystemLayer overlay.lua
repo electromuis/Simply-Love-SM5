@@ -265,6 +265,7 @@ local NewSessionRequestProcessor = function(res, gsInfo)
 	if gsInfo == nil then return end
 	
 	local groovestats = gsInfo:GetChild("GrooveStats")
+
 	local service1 = gsInfo:GetChild("Service1")
 	local service2 = gsInfo:GetChild("Service2")
 	local service3 = gsInfo:GetChild("Service3")
@@ -441,6 +442,39 @@ t[#t+1] = Def.ActorFrame{
 	},
 
 	LoadFont("Common Normal")..{
+		Name="ITGOnline",
+		Text="     ITGnOline",
+		InitCommand=function(self)
+			self:visible(SYNCMAN:IsEnabled()):addy(36):horizalign(left)
+			self:horizalign(left)
+			DiffuseText(self)
+			self.isOnline = false
+		end,
+		VisualStyleSelectedMessageCommand=function(self) DiffuseText(self) end,
+		ResetCommand=function(self)
+			if not SYNCMAN:IsEnabled() then
+				self:visible(false)
+				return
+			end
+
+			self:visible(true)
+
+			if self.isOnline == true then
+				self:settext("✔ ITG Online")
+			else
+				self:settext("❌ ITG Online")
+				SYNCMAN:Connect()
+			end
+		end,
+		SyncStartConnectedMessageCommand=function(self)
+			self.isOnline = true
+			-- We don't want to keep the connection alive if we're not in the lobby, so disconnect immediately after a successful connection test.
+			-- SYNCMAN:Disconnect()
+			self:queuecommand("Reset")
+		end
+	},
+
+	LoadFont("Common Normal")..{
 		Name="Service1",
 		Text="",
 		InitCommand=function(self)
@@ -502,7 +536,7 @@ LoadUnlocksCache()
 -- We only want one global instance of this, so we create it once but
 -- can get the same instance of the actor multiple times.
 
-t[#t+1] = CreateOnlineHandler()
+t[#t+1] = SYNCMAN:CreateOnlineHandler()
 
 -- -----------------------------------------------------------------------
 -- SystemMessage stuff.

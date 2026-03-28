@@ -65,4 +65,8 @@ end
 -- add to the ActorFrame last; overlapped by StepStatistics otherwise
 t[#t+1] = LoadActor("./Shared/BPMDisplay.lua")
 
+if SYNCMAN:IsLinked() then
+	t[#t+1] = LoadActor("./Shared/SyncStartScores.lua")
+end
+
 return t

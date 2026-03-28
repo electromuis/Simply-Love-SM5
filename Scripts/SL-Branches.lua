@@ -37,6 +37,18 @@ end
 
 ------------------------------------------------------------
 
+Branch.ToGameplay = function()
+	if ThemePrefs.Get("EnableITGOnline") == "Always" then
+		return "ScreenGameplayWaiting"
+	end
+
+	if SYNCMAN.lobby ~= nil and SYNCMAN.lobby.temporary == false then
+		return "ScreenGameplayWaiting"
+	end
+
+	return Branch.GameplayScreen()
+end
+
 if not Branch then Branch = {} end
 
 Branch.AfterScreenRankingDouble = function()
@@ -52,6 +64,7 @@ SelectMusicOrCourse = function()
 		end
 
 		return "ScreenSelectMusic"
+		-- return "ScreenSelectOnlineOption"
 	end
 end
 
@@ -64,6 +77,8 @@ Branch.AllowScreenSelectProfile = function()
 end
 
 Branch.AfterSelectProfile = function()
+	-- return "ScreenSelectOnlineOption"
+
 	-- If we only want to sometimes display QR Login, only do so if at least one
 	-- of the chosen profiles doesn't already have an API key saved.
 	local allApiKeys = true
@@ -188,21 +203,11 @@ Branch.AfterSelectMusic = function()
 	--
 	-- NOTE: It is possible for a player to back out of PlayerOptions, but they
 	-- would be expected to pick the same song since it's broadcast to the library.
-	--
-	-- TODO: Consider locking the music wheel in this case.
-	MESSAGEMAN:Broadcast("SongSelected")
 
 	if SCREENMAN:GetTopScreen():GetGoToOptions() then
 		return "ScreenPlayerOptions"
 	else
-		-- routine mode specifically uses ScreenGameplayShared
-		local style = GAMESTATE:GetCurrentStyle():GetName()
-		if style == "routine" then
-			return "ScreenGameplayShared"
-		end
-
-		-- while everything else (single, versus, double, etc.) uses ScreenGameplay
-		return "ScreenGameplay"
+		return Branch.ToGameplay()
 	end
 end
 
