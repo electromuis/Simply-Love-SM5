@@ -22,9 +22,9 @@ local knownDisconnectScreens = {
 
 local scoreScreens = {"ScreenGameplay", "ScreenEvaluationStage"}
 
--- local host = "online.itgeurocup.com"
-local host = "localhost"
-local port = 1337
+local host = "online.itgeurocup.com"
+-- local host = "localhost"
+local port = 443
 
 SYNCMAN.handlers = {
     lobbyState = function(data)
@@ -70,7 +70,7 @@ function SYNCMAN:Connect()
         end
 
         SYNCMAN.ws = NETWORK:WebSocket{
-            url="ws://" .. host .. ":" .. port,
+            url="wss://" .. host .. ":" .. port,
             handshakeTimeout=3,
             pingInterval=5,
             automaticReconnect=true,

@@ -26,9 +26,6 @@ local af = Def.ActorFrame {
             SYNCMAN:SendUpdate()
         end
     end,
-	OnCommand=function(self)
-		
-	end,
 	ListenTimerCommand=function(self)
 		local topscreen = SCREENMAN:GetTopScreen()
 		local seconds = topscreen:GetChild("Timer"):GetSeconds()
