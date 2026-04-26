@@ -23,7 +23,7 @@ local af = Def.ActorFrame{
 			if scores[i] then
 				local score = scores[i]
 
-				self:GetChild("HighScoreEntry"..i):GetChild("Name"):settext(score.name)
+				self:GetChild("HighScoreEntry"..i):GetChild("Name"):settext(score.profileName)
 				self:GetChild("HighScoreEntry"..i):GetChild("Score"):settext(FormatPercentScore(score.score / 100))
 
 				if playerObj then

@@ -106,7 +106,7 @@ for i = 1, MAX_PLAYER_COUNT do
 
             if #players >= self.playerIndex then
                 local player = players[self.playerIndex]
-                self:settext(player.name)
+                self:settext(player.profileName)
                 self:visible(true)
             else
                 self:visible(false)

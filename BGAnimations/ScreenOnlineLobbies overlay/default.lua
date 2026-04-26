@@ -621,7 +621,8 @@ local af = Def.ActorFrame{
 			})
 			SYNCMAN:Send("joinLobby", {
 				code=params.code,
-				password=params.password or ""
+				password=params.password or "",
+				machine=SYNCMAN:GetMachineState()
 			})
 		end
 	end,

@@ -22,6 +22,7 @@ local knownDisconnectScreens = {
 
 local scoreScreens = {"ScreenGameplay", "ScreenEvaluationStage"}
 
+local protocol = "wss"
 local host = "online.itgeurocup.com"
 -- local host = "localhost"
 local port = 443
@@ -70,7 +71,7 @@ function SYNCMAN:Connect()
         end
 
         SYNCMAN.ws = NETWORK:WebSocket{
-            url="wss://" .. host .. ":" .. port,
+            url=protocol .. "://" .. host .. ":" .. port,
             handshakeTimeout=3,
             pingInterval=5,
             automaticReconnect=true,
@@ -92,9 +93,11 @@ function SYNCMAN:Connect()
                     handler(decoded.data)
                 elseif msgType == "Open" then
                     SYNCMAN.connected = true
+					SYNCMAN:Reset(true)
                     MESSAGEMAN:Broadcast("SyncStartConnected")
                 elseif msgType == "Close" then
                     SYNCMAN.connected = false
+					SYNCMAN:Reset(true)
                     MESSAGEMAN:Broadcast("SyncStartDisconnected")
                     Trace("WebSocket closed: " .. msg.reason)
 				elseif msgType == "Error" then
@@ -267,7 +270,7 @@ function SYNCMAN:JoinTemporary(song)
     )
 end
 
-function SYNCMAN:Reset()
+function SYNCMAN:Reset(full)
     if SYNCMAN.lobby ~= nil and SYNCMAN.lobby.temporary == true then
         SYNCMAN:Send("leaveLobby")
         SYNCMAN.lobby = nil
@@ -281,6 +284,11 @@ function SYNCMAN:Reset()
         P2 = nil
     }
 	SYNCMAN.errorMsg = nil
+
+	if full then
+		SYNCMAN.lobby = nil
+		MESSAGEMAN:Broadcast("OnlineLobbyState", data or {})
+	end
 
 	SYNCMAN:SendUpdate()
 end
@@ -402,7 +410,8 @@ function SYNCMAN:GetPlayerState(player)
 		if SYNCMAN.inGame == true then
 			judgments = SYNCMAN:GetJudgmentCounts(player)
 		end
-		local pss = STATSMAN:GetCurStageStats():GetPlayerStageStats(player)
+		local ss = STATSMAN:GetCurStageStats()
+		local pss = ss:GetPlayerStageStats(player)
 		local dance_points = pss:GetPercentDancePoints()
 		local percent = FormatPercentScore( dance_points ):gsub("%%", "")
 		score = tonumber(percent)
@@ -412,7 +421,7 @@ function SYNCMAN:GetPlayerState(player)
 
 		if screenName == "ScreenGameplay" and SYNCMAN.inGame then
 			health = pss:GetCurrentLife() * 100
-			currentTime = pss:GetStepsSeconds()
+			currentTime = ss:GetGameplaySeconds()
 		end
 
 		songProgression = {
@@ -425,7 +434,7 @@ function SYNCMAN:GetPlayerState(player)
 	
 	return {
 		playerId = pn,
-		name = name,
+		profileName = name,
 		ready=SYNCMAN.readyState[pn],
 
 		diffLevel = diffLevel,

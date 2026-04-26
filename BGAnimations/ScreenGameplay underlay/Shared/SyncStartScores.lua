@@ -21,9 +21,9 @@ local t = Def.ActorFrame{
     end,
 	OffCommand=function(self)
 		for player in ivalues(GAMESTATE:GetEnabledPlayers()) do
-			local pss = STATSMAN:GetCurStageStats():GetPlayerStageStats(player)
+			local ss = STATSMAN:GetCurStageStats()
 			
-			if not pss:GaveUp() then
+			if not ss:GaveUp() then
 				SYNCMAN:Send("sendScoreResult", {
 					player = SYNCMAN:GetPlayerState(player),
 					songInfo = SYNCMAN.lobby.songInfo
@@ -55,7 +55,7 @@ local t = Def.ActorFrame{
             if scoreIndex > 0 and scoreIndex <= #scores then
                 local score = scores[scoreIndex]
                 local color = score.failed and color("1,0.3,0.3,0.4") or color("1,1,1,0.5")
-                playerNameTexts[i]:settext(score.name):diffuse(color)
+                playerNameTexts[i]:settext(score.profileName):diffuse(color)
                 scoreTexts[i]:settext(FormatPercentScore(score.score / 100):gsub("%%", "")):diffuse(color)
             else
                 playerNameTexts[i]:settext("")

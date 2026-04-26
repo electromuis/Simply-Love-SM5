@@ -1,5 +1,10 @@
 local af = Def.ActorFrame {
     OnCommand=function(self)
+		SYNCMAN.readyState = {
+			P1 = nil,
+			P2 = nil
+		}
+
         if SYNCMAN.lobby == nil then
             SYNCMAN:JoinTemporary(GAMESTATE:GetCurrentSong())
         else
@@ -26,26 +31,26 @@ local af = Def.ActorFrame {
             SYNCMAN:SendUpdate()
         end
     end,
-	ListenTimerCommand=function(self)
-		local topscreen = SCREENMAN:GetTopScreen()
-		local seconds = topscreen:GetChild("Timer"):GetSeconds()
+	-- ListenTimerCommand=function(self)
+	-- 	local topscreen = SCREENMAN:GetTopScreen()
+	-- 	local seconds = topscreen:GetChild("Timer"):GetSeconds()
 
-		if seconds <= 0 then
-			for player in ivalues( PlayerNumber ) do
-				if GAMESTATE:IsHumanPlayer(player) then
-					local pn = ToEnumShortString(player)
-					SYNCMAN.readyState[pn] = true
-				end
-			end	
+	-- 	if seconds <= 0 then
+	-- 		for player in ivalues( PlayerNumber ) do
+	-- 			if GAMESTATE:IsHumanPlayer(player) then
+	-- 				local pn = ToEnumShortString(player)
+	-- 				SYNCMAN.readyState[pn] = true
+	-- 			end
+	-- 		end	
 			
-			SYNCMAN:SendUpdate()
-			MESSAGEMAN:Broadcast("SyncStartLobbyUpdate")
-			SYNCMAN:Send("startSong", {phase = "ScreenGameplayWaiting"})
-		else
-			self:sleep(0.5)
-			self:queuecommand("ListenTimer")
-		end
-	end,
+	-- 		SYNCMAN:SendUpdate()
+	-- 		MESSAGEMAN:Broadcast("SyncStartLobbyUpdate")
+	-- 		SYNCMAN:Send("startSong", {phase = "ScreenGameplayWaiting"})
+	-- 	else
+	-- 		self:sleep(0.5)
+	-- 		self:queuecommand("ListenTimer")
+	-- 	end
+	-- end,
 }
 
 af[#af+1] = LoadActor("./../ScreenEvaluation common/Shared/TitleAndBanner.lua")
