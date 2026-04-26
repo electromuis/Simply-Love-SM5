@@ -1121,7 +1121,7 @@ local af = Def.ActorFrame{
 				end
 			},
 			LoadFont("Common Bold")..{
-				Text="Go Back",
+				Text="Select Music",
 				InitCommand=function(self)
 					self:zoom(0.5)
 				end,
