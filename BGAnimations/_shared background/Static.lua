@@ -15,14 +15,14 @@ end
 local af = Def.ActorFrame {
 	InitCommand=function(self)
 		self:diffusealpha(0)
-		self:visible(style == "SRPG9")
+		self:visible(style == "SRPG9" or style == "Eurocup")
 	end,
 	OnCommand=function(self)
 		self:accelerate(0.8):diffusealpha(1)
 	end,
 	VisualStyleSelectedMessageCommand=function(self)
 		local style = ThemePrefs.Get("VisualStyle")
-		if style == "SRPG9" then
+		if style == "SRPG9" or style == "Eurocup" then
 			self:visible(true)
 		else
 			self:visible(false)
@@ -31,47 +31,72 @@ local af = Def.ActorFrame {
 	Def.Sprite {
 		Name="Background",
 		InitCommand= function(self)
-			if style ~= "SRPG9" then self:Load(nil) return end
+			if style ~= "SRPG9" and style ~= "Eurocup" then self:Load(nil) return end
 
 			local video_allowed = ThemePrefs.Get("AllowThemeVideos")
 			if video_allowed then
-				self:Load(THEME:GetPathG("", "_VisualStyles/SRPG9/BackgroundVideo.mp4"))
+				self:Load(THEME:GetPathG("", "_VisualStyles/" .. style .. "/BackgroundVideo.mp4"))
 			else
-				self:Load(THEME:GetPathG("", "_VisualStyles/SRPG9/SharedBackground.png"))
+				self:Load(THEME:GetPathG("", "_VisualStyles/" .. style .. "/SharedBackground.png"))
 			end
-			self:xy(_screen.cx, _screen.cy)
-			    :zoomto(_screen.h * 16 / 9, _screen.h)
-				:diffuse(Brighten(GetCurrentColor(true), 3))
-			self:visible(style == "SRPG9")
+
+			if style == "SRPG9" then
+				self:xy(_screen.cx, _screen.cy)
+					:zoomto(_screen.h * 16 / 9, _screen.h)
+					:diffuse(Brighten(GetCurrentColor(true), 3))
+				self:visible(true)
+			end
+
+			if style == "Eurocup" then
+				self:xy(_screen.cx, _screen.cy)
+					:zoomto(_screen.h * 16 / 9, _screen.h)
+				self:visible(true)
+			end
 		end,
 		ColorSelectedMessageCommand=function(self)
 			self:diffuse(Brighten(GetCurrentColor(true), 3))
 		end,
 		VisualStyleSelectedMessageCommand=function(self)
-			if style ~= "SRPG9" then self:Load(nil) return end
+			if style ~= "SRPG9" and style ~= "Eurocup" then self:Load(nil) return end
 
 			local video_allowed = ThemePrefs.Get("AllowThemeVideos")
 			if video_allowed then
-				self:Load(THEME:GetPathG("", "_VisualStyles/SRPG9/BackgroundVideo.mp4"))
+				self:Load(THEME:GetPathG("", "_VisualStyles/" .. style .. "/BackgroundVideo.mp4"))
 			else
-				self:Load(THEME:GetPathG("", "_VisualStyles/SRPG9/SharedBackground.png"))
+				self:Load(THEME:GetPathG("", "_VisualStyles/" .. style .. "/SharedBackground.png"))
 			end
-			self:xy(_screen.cx, _screen.cy)
-			    :zoomto(_screen.h * 16 / 9, _screen.h)
-				:diffuse(Brighten(GetCurrentColor(true), 3))
+
+			if style == "SRPG9" then
+				self:xy(_screen.cx, _screen.cy)
+					:zoomto(_screen.h * 16 / 9, _screen.h)
+					:diffuse(Brighten(GetCurrentColor(true), 3))
+			end
+
+			if style == "Eurocup" then
+				self:xy(_screen.cx, _screen.cy)
+					:zoomto(_screen.h * 16 / 9, _screen.h)
+			end
 		end,
 		AllowThemeVideoChangedMessageCommand=function(self)
-			if style ~= "SRPG9" then self:Load(nil) return end
+			if style ~= "SRPG9" and style ~= "Eurocup" then self:Load(nil) return end
 
 			local video_allowed = ThemePrefs.Get("AllowThemeVideos")
 			if video_allowed then
-				self:Load(THEME:GetPathG("", "_VisualStyles/SRPG9/BackgroundVideo.mp4"))
+				self:Load(THEME:GetPathG("", "_VisualStyles/" .. style .. "/BackgroundVideo.mp4"))
 			else
-				self:Load(THEME:GetPathG("", "_VisualStyles/SRPG9/SharedBackground.png"))
+				self:Load(THEME:GetPathG("", "_VisualStyles/" .. style .. "/SharedBackground.png"))
 			end
-			self:xy(_screen.cx, _screen.cy)
-			    :zoomto(_screen.h * 16 / 9, _screen.h)
-				:diffuse(Brighten(GetCurrentColor(true), 3))
+			
+			if style == "SRPG9" then
+				self:xy(_screen.cx, _screen.cy)
+					:zoomto(_screen.h * 16 / 9, _screen.h)
+					:diffuse(Brighten(GetCurrentColor(true), 3))
+			end
+
+			if style == "Eurocup" then
+				self:xy(_screen.cx, _screen.cy)
+					:zoomto(_screen.h * 16 / 9, _screen.h)
+			end
 		end,
 	},
 	Def.Quad{

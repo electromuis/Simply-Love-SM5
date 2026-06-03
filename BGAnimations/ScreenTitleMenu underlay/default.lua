@@ -35,11 +35,13 @@ af2.Name="SLInfo"
 -- and the arrows graphic that appears between the two words
 af2[#af2+1] = LoadActor("./Logo.lua")
 
--- 3 lines of text:
---    theme_name   theme_version
---    stepmania_version
---    num_songs in num_groups, num_courses
-af2[#af2+1] = LoadActor("./UserContentText.lua")
+if ThemePrefs.Get("VisualStyle") ~= "Eurocup" then
+	-- 3 lines of text:
+	--    theme_name   theme_version
+	--    stepmania_version
+	--    num_songs in num_groups, num_courses
+	af2[#af2+1] = LoadActor("./UserContentText.lua")
+end
 
 -- "The chills, I have them down my spine."
 if IsSpooky() then
