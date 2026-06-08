@@ -149,7 +149,7 @@ SL_CustomPrefs.Get = function()
 		SimplyLoveColor =
 		{
 			-- a nice pinkish-purple, by default
-			Default = 3,
+			Default = 6,
 			Choices = { 1,2,3,4,5,6,7,8,9,10,11,12 },
 			Values  = { 1,2,3,4,5,6,7,8,9,10,11,12 }
 		},

@@ -2,8 +2,8 @@ SYNCMAN = {
     lobby = nil,
     rooms = {},
     readyState = {
-        P1 = nil,
-        P2 = nil
+        P1 = "Unknown",
+        P2 = "Unknown"
     },
     ws = nil,
     connected = false,
@@ -22,10 +22,10 @@ local knownDisconnectScreens = {
 
 local scoreScreens = {"ScreenGameplay", "ScreenEvaluationStage"}
 
-local protocol = "wss"
-local host = "online.itgeurocup.com"
--- local host = "localhost"
-local port = 443
+local protocol = "ws"
+-- local host = "online.itgeurocup.com"
+local host = "localhost"
+local port = 1337
 
 SYNCMAN.handlers = {
     lobbyState = function(data)
@@ -280,8 +280,8 @@ function SYNCMAN:Reset(full)
     SYNCMAN.inGame = false
     SYNCMAN.startAt = 0
     SYNCMAN.readyState = {
-        P1 = nil,
-        P2 = nil
+        P1 = "Unknown",
+        P2 = "Unknown"
     }
 	SYNCMAN.errorMsg = nil
 
@@ -310,11 +310,11 @@ function SYNCMAN:GetSyncOptionRow()
 
             if list[1] == true then
                 local pn = ToEnumShortString(p)
-                SYNCMAN.readyState[pn] = true
+                SYNCMAN.readyState[pn] = "Ready"
                 
                 SYNCMAN:SendUpdate()
                 MESSAGEMAN:Broadcast("SyncStartLobbyUpdate")
-				SYNCMAN:Send("startSong", {phase = "ScreenGameplayWaiting"})
+				-- SYNCMAN:Send("startSong", {phase = "ScreenGameplayWaiting"})
             end
 
             if list[2] == true then
@@ -431,7 +431,7 @@ function SYNCMAN:GetPlayerState(player)
 	end
 
 	local pn = ToEnumShortString(player)
-	
+
 	return {
 		playerId = pn,
 		profileName = name,
@@ -456,7 +456,6 @@ function SYNCMAN:GetMachineState()
 	local players = {}
     local screenName = SCREENMAN:GetTopScreen():GetName()	
 	local machineName = PREFSMAN:GetPreference("MachineName")
-
 
 	for player in ivalues(GAMESTATE:GetEnabledPlayers()) do
 		players[#players+1] = SYNCMAN:GetPlayerState(player)

@@ -13,7 +13,7 @@ local af = Def.ActorFrame {
     OnlineLobbyStateMessageCommand=function(self)
         local players = SYNCMAN:GetCurrentPlayers()
         for i, player in ipairs(players) do
-            if not player.ready then
+            if player.ready ~= "Ready" then
                 self.showing = false
                 self:playcommand("Hide")
                 return

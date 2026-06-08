@@ -34,8 +34,8 @@ function GetCurrentColor( decorative )
 end
 
 function PlayerColor( pn, decorative )
-	if pn == PLAYER_1 then return GetHexColor(SL.Global.ActiveColorIndex, decorative) end
-	if pn == PLAYER_2 then return GetHexColor(SL.Global.ActiveColorIndex-2, decorative) end
+	if pn == PLAYER_1 then return GetHexColor(SL.Global.ActiveColorIndex+1, decorative) end
+	if pn == PLAYER_2 then return GetHexColor(SL.Global.ActiveColorIndex, decorative) end
 	return Color.White
 end
 

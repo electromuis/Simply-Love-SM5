@@ -1,11 +1,10 @@
 local af = Def.ActorFrame {
-    OnCommand=function(self)
-		SYNCMAN.readyState = {
-			P1 = nil,
-			P2 = nil
-		}
-
-        if SYNCMAN.lobby == nil then
+    InitCommand=function(self)
+		SYNCMAN.readyState.P1 = "Unknown"
+		SYNCMAN.readyState.P2 = "Unknown"
+    end,
+	OnCommand=function(self)
+		if SYNCMAN.lobby == nil then
             SYNCMAN:JoinTemporary(GAMESTATE:GetCurrentSong())
         else
             SYNCMAN:SendUpdate()
@@ -17,7 +16,7 @@ local af = Def.ActorFrame {
 		if PREFSMAN:GetPreference("MenuTimer") then
 			self:queuecommand("ListenTimer")
 		end
-    end,
+	end,
     SyncStartStartMessageCommand=function(self)
         local top_screen = SCREENMAN:GetTopScreen()
         top_screen:SetNextScreenName(Branch.GameplayScreen()):StartTransitioningScreen("SM_GoToNextScreen")
