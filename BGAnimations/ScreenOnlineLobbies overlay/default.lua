@@ -644,8 +644,9 @@ local af = Def.ActorFrame{
 			self:queuecommand("Hover")
 		end
 	end,
-	SyncStartResponseCreateLobby=function(self, params)
+	SyncStartResponseCreateLobbyMessageCommand=function(self, params)
 		if params and params.event == "createLobby" and params.success == false then
+			SM(params.message)
 			mode = "browse"
 			self:GetChild("JoinedLobbyContent"):visible(false)
 			self:GetChild("LobbyContent"):visible(true)
@@ -656,8 +657,9 @@ local af = Def.ActorFrame{
 			})
 		end
 	end,
-	SyncStartResponseJoinLobby=function(self, params)
+	SyncStartResponseJoinLobbyMessageCommand=function(self, params)
 		if params.success == false then
+			SM(params.message)
 			mode = "browse"
 			self:GetChild("JoinedLobbyContent"):visible(false)
 			self:GetChild("LobbyContent"):visible(true)

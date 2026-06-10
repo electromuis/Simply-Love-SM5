@@ -22,10 +22,10 @@ local knownDisconnectScreens = {
 
 local scoreScreens = {"ScreenGameplay", "ScreenEvaluationStage"}
 
-local protocol = "ws"
--- local host = "online.itgeurocup.com"
-local host = "localhost"
-local port = 1337
+local protocol = "wss"
+local host = "online.itgeurocup.com"
+-- local host = "localhost"
+local port = 443
 
 SYNCMAN.handlers = {
     lobbyState = function(data)
@@ -79,6 +79,8 @@ function SYNCMAN:Connect()
                 local msgType = ToEnumShortString(msg.type)
 
                 if msgType == "Message" then
+                    -- SM("Received: " .. msg.data)
+
                     local decoded = JsonDecode(msg.data)
                     if not decoded then
                         Trace("ITGO: Could not decode: " .. msg.data)
@@ -244,6 +246,8 @@ function SYNCMAN:Send(event, data)
         event = event,
         data = data
     })
+
+    -- SM("Sent: " .. encoded)
     
     ws:Send(encoded, false)
 

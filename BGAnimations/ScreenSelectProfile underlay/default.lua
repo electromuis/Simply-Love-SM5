@@ -165,6 +165,9 @@ local t = Def.ActorFrame {
 			end
 		end
 		SCREENMAN:GetTopScreen():Finish()
+
+		
+		SYNCMAN:SendUpdate()
 	end,
 	WhatMessageCommand=function(self) self:runcommandsonleaves(function(subself) if subself.distort then subself:distort(0.5) end end):sleep(4):queuecommand("Undistort") end,
 	UndistortCommand=function(self) self:runcommandsonleaves(function(subself) if subself.distort then subself:distort(0) end end) end,
